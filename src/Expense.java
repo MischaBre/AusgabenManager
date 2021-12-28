@@ -12,10 +12,9 @@ public class Expense implements Comparable<Expense> {
 
     private final String hash;
     private LocalDate date;
-    private String reciever;
-    private int recieverNumber;
     private String consignor;
     private String consignorNumber;
+    private String detail;
     private double amount;
     private Set<String> category;
 
@@ -24,12 +23,11 @@ public class Expense implements Comparable<Expense> {
         return (int)(this.date.toEpochDay() - expense.date.toEpochDay());
     }
 
-    public Expense(LocalDate date, String reciever, int recieverNumber, String consignor, String consignorNumber, double amount) {
+    public Expense(LocalDate date, String consignor, String consignorNumber, String detail, double amount) {
         this.date = date;
-        this.reciever = reciever;
-        this.recieverNumber = recieverNumber;
         this.consignor = consignor;
         this.consignorNumber = consignorNumber;
+        this.detail = detail;
         this.amount = amount;
         this.category = new HashSet<>();
         this.hash = HashThis(GetExpenseString());
@@ -60,24 +58,19 @@ public class Expense implements Comparable<Expense> {
     }
 
     public void PrintExpense() {
-        System.out.printf(hash + " " + date + " " + consignor + " " + consignorNumber + " " + amount + " " + reciever + "%n");
+        System.out.printf(hash + " " + date + " " + consignor + " " + consignorNumber + " " + detail +" " + amount + " " + "%n");
     }
 
     //Getter
-    public String GetExpenseString() { return (date + reciever + recieverNumber + consignor  + consignorNumber + amount); }
+
+    public String GetNiceExpenseString() { return date + " " + consignor + " " + consignorNumber + " " + detail +" " + amount + " "; }
+
+    public String GetExpenseString() { return date + consignor  + consignorNumber + detail + amount; }
 
     public String getHash() { return hash; }
 
     public LocalDate getDate() {
         return date;
-    }
-
-    public String getReciever() {
-        return reciever;
-    }
-
-    public int getRecieverNumber() {
-        return recieverNumber;
     }
 
     public String getConsignor() {
@@ -86,6 +79,10 @@ public class Expense implements Comparable<Expense> {
 
     public String getConsignorNumber() {
         return consignorNumber;
+    }
+
+    public String getDetail() {
+        return detail;
     }
 
     public double getAmount() {
@@ -101,20 +98,16 @@ public class Expense implements Comparable<Expense> {
         this.date = date;
     }
 
-    public void setReciever(String reciever) {
-        this.reciever = reciever;
-    }
-
-    public void setRecieverNumber(int recieverNumber) {
-        this.recieverNumber = recieverNumber;
-    }
-
     public void setConsignor(String consignor) {
         this.consignor = consignor;
     }
 
     public void setConsignorNumber(String consignorNumber) {
         this.consignorNumber = consignorNumber;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
     }
 
     public void setAmount(double amount) {

@@ -24,36 +24,36 @@
         </properties>
         <border type="none"/>
         <children>
-          <component id="f264c" class="javax.swing.JButton" binding="button1" default-binding="true">
+          <component id="f264c" class="javax.swing.JButton" binding="ladenButton">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Laden"/>
             </properties>
           </component>
-          <component id="d9b38" class="javax.swing.JButton" binding="button2" default-binding="true">
+          <component id="d9b38" class="javax.swing.JButton" binding="unsortiertButton">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Unsortiert"/>
             </properties>
           </component>
-          <component id="fe5ad" class="javax.swing.JButton" binding="button3" default-binding="true">
+          <component id="fe5ad" class="javax.swing.JButton" binding="sortiertButton" default-binding="true">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Sortiert"/>
             </properties>
           </component>
-          <component id="c77ae" class="javax.swing.JButton" binding="button4" default-binding="true">
+          <component id="c77ae" class="javax.swing.JButton" binding="löschenButton" default-binding="true">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Löschen"/>
             </properties>
           </component>
         </children>
@@ -70,14 +70,21 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="ab7de" class="javax.swing.JList" binding="expenseJList">
+          <scrollpane id="1a2c">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <preferred-size width="150" height="50"/>
-              </grid>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
-          </component>
+            <border type="none"/>
+            <children>
+              <component id="dea5f" class="javax.swing.JList" binding="expenseJList">
+                <constraints/>
+                <properties>
+                  <selectionMode value="0"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
         </children>
       </grid>
     </children>
