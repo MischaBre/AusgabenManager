@@ -23,7 +23,7 @@ public class Expense implements Comparable<Expense> {
 
     @Override
     public String toString() {
-        return date + " " + consignor + " " + amount;
+        return (category.equals("") ? "_ " : "x ") + date + " " + consignor + " " + amount;
     }
 
     public Expense(LocalDate date, String consignor, String consignorNumber, String detail, double amount) {
