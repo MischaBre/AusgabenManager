@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 public class MainFrame extends JFrame{
     private JPanel mainPanel;
     private JButton ladenButton;
-    private JButton unsortiertButton;
-    private JButton sortiertButton;
     private JButton clearButton;
     private JList<Expense> expenseJList;
     private JTextArea detailTextArea;
@@ -25,6 +23,8 @@ public class MainFrame extends JFrame{
     private JLabel dateLabel;
     private JLabel catInfoLabel;
     private JLabel catAmountLabel;
+    private JComboBox<String> banksettingsBox;
+    private DefaultComboBoxModel<String> banksettingsJCBoxModel;
     private DefaultListModel<Expense> expenseJListModel;
     private DefaultComboBoxModel<String> categoriesJCBoxModel;
     private List<Expense> expenses;
@@ -40,36 +40,25 @@ public class MainFrame extends JFrame{
         this.setContentPane(mainPanel);
         this.pack();
 
-                                                                //ExpenseList and JList initialization
-        expenses = new ArrayList<>();
-        expenseJListModel = new DefaultListModel<>();
-        expenseJList.setModel(expenseJListModel);
+                                                                //StartUp and Initialization of program
+        Initialization();
 
-                                                                //FileReader initialization
-        fileReader = new FileReader();
-
-                                                                //Load categories
-        categories = fileReader.LoadCategoriesFromCfg("categories.cfg");
-        categoriesJCBoxModel = new DefaultComboBoxModel<>();
-        categoryBox.setModel(categoriesJCBoxModel);
-        categoriesJCBoxModel.addElement("<keine>");
-        categoriesJCBoxModel.addAll(categories.keySet());
-
-                                                                //Zeige Kategorienauswertung
-        ShowCategoryAmounts();
-
+                                                                //ActionListeners
         ladenButton.addActionListener(e -> {
 
             expenses = OpenFile(expenses);
+
             ReloadJList(expenses);
+            banksettingsBox.setEnabled(false);
+            CalculateCategoryAmounts();
 
         });
-        unsortiertButton.addActionListener(e -> ReloadJList(expenses));
-        sortiertButton.addActionListener(e -> ReloadJList(SortExpenseListByDate(expenses)));
         clearButton.addActionListener(e -> {
 
             expenseJListModel.removeAllElements();
             expenses.clear();
+            banksettingsBox.setEnabled(true);
+            CalculateCategoryAmounts();
 
         });
         expenseJList.addListSelectionListener(e -> {
@@ -82,7 +71,7 @@ public class MainFrame extends JFrame{
         });
         categoryBox.addItemListener(e -> {
 
-            if (e.getStateChange() == ItemEvent.SELECTED) {
+            if (e.getStateChange() == ItemEvent.SELECTED && selectedExpense != null) {
                 String selectedCategory = GetSelectedCategory();
                 if (!selectedExpense.getCategory().equals(selectedCategory)) {
                     if (categoryBox.getSelectedIndex() != 0) {
@@ -112,6 +101,31 @@ public class MainFrame extends JFrame{
 
     }
 
+    private void Initialization() {
+                                                                //ExpenseList and JList initialization
+        expenses = new ArrayList<>();
+        expenseJListModel = new DefaultListModel<>();
+        expenseJList.setModel(expenseJListModel);
+
+                                                                //FileReader initialization
+        fileReader = new FileReader();
+        fileReader.LoadFromCfg("settings.cfg");
+
+        banksettingsJCBoxModel = new DefaultComboBoxModel<>();
+        banksettingsBox.setModel(banksettingsJCBoxModel);
+        banksettingsJCBoxModel.addAll(fileReader.getBanks());
+        banksettingsBox.setSelectedIndex(0);
+
+                                                                //Load categories
+        categories = fileReader.getCategories();
+        categoriesJCBoxModel = new DefaultComboBoxModel<>();
+        categoryBox.setModel(categoriesJCBoxModel);
+        categoriesJCBoxModel.addElement("<keine>");
+        categoriesJCBoxModel.addAll(categories.keySet());
+
+                                                                //Zeige Kategorienauswertung
+        ShowCategoryAmounts();
+    }
                                                                 //Open File
 
     private List<Expense> OpenFile(List<Expense> oldExpenseList) {
@@ -200,14 +214,12 @@ public class MainFrame extends JFrame{
 
     private String TreeMapToString(TreeMap<String, Double> data, int value) {
         StringBuilder string = new StringBuilder();
+        String alignment = (value == 0 ? "left" : "right");
         string.append("<html>");
-        data.forEach((k,v) -> string.append(value == 0 ? k : String.format("%,.2f €", v)).append("<p/>"));
+        data.forEach((k,v) -> string.append("<p align=\"").append(alignment).append("\">").append(value == 0 ? k : String.format("%,.2f €", v)).append("</p>"));
         string.append("</html>");
         return string.toString();
     }
-
-
-
 }
 
 

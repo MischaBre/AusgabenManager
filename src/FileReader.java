@@ -1,5 +1,3 @@
-import jdk.jfr.Category;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -9,15 +7,19 @@ import java.util.*;
 
 public class FileReader {
 
-
+    private TreeMap<String, Double> categories;
+    private TreeSet<String> banksettings;
 
     public FileReader() {
 
+        categories = new TreeMap<>();
+        banksettings = new TreeSet<>();
+
     }
 
-    public TreeMap<String, Double> LoadCategoriesFromCfg(String fileName) {
-        TreeMap<String, Double> categories = new TreeMap<>();
-        boolean catStart = false;
+    public void LoadFromCfg(String fileName) {
+
+        int type = 0;                                   //int type for switching between add to categories/types
         try {
             File file = new File(fileName);
             Scanner myScanner = new Scanner(file);
@@ -25,13 +27,27 @@ public class FileReader {
             while (myScanner.hasNextLine()) {
                 String line = myScanner.nextLine().trim();
                 //do something with data
-                if (catStart) {
-                    categories.put(line,0.0);
-                }
-                if (line.equals("[categories]")) {
-                    catStart = true;
-                } else if(line.equals("")) {
-                    catStart = false;
+                switch (line) {
+                    case "[categories]":
+                        type = 1;
+                        break;
+
+                    case "[banksettings]":
+                        type = 2;
+                        break;
+
+                    case "":
+                        type = 0;
+                        break;
+
+                    default:
+                        switch (type) {
+                            case 1 -> categories.put(line, 0.0);
+                            case 2 -> banksettings.add(line);
+                            default -> {
+                            }
+                        }
+                        break;
                 }
             }
             myScanner.close();
@@ -39,7 +55,7 @@ public class FileReader {
             System.out.println("Error");
             e.printStackTrace();
         }
-        return categories;
+
     }
 
     public List<Expense> LoadExpensesFromCSVDKB(String fileName, String keyword) {
@@ -72,5 +88,13 @@ public class FileReader {
             e.printStackTrace();
         }
         return expenses;
+    }
+
+    public TreeMap<String, Double> getCategories() {
+        return categories;
+    }
+
+    public TreeSet<String> getBanks() {
+        return banksettings;
     }
 }
