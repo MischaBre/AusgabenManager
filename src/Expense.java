@@ -5,8 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Expense implements Comparable<Expense> {
 
@@ -16,11 +14,16 @@ public class Expense implements Comparable<Expense> {
     private String consignorNumber;
     private String detail;
     private double amount;
-    private Set<String> category;
+    private String category;
 
     @Override
     public int compareTo(Expense expense) {
         return (int)(this.date.toEpochDay() - expense.date.toEpochDay());
+    }
+
+    @Override
+    public String toString() {
+        return date + " " + consignor + " " + amount;
     }
 
     public Expense(LocalDate date, String consignor, String consignorNumber, String detail, double amount) {
@@ -29,7 +32,7 @@ public class Expense implements Comparable<Expense> {
         this.consignorNumber = consignorNumber;
         this.detail = detail;
         this.amount = amount;
-        this.category = new HashSet<>();
+        this.category = "";
         this.hash = HashThis(GetExpenseString());
     }
 
@@ -40,21 +43,9 @@ public class Expense implements Comparable<Expense> {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+        assert md != null;
         md.update(StandardCharsets.UTF_8.encode(data));
         return String.format("%032x", new BigInteger(1,md.digest()));
-    }
-
-    public boolean AddCategory(String category) {
-        if (!this.category.contains(category)) {
-            this.category.add(category);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public boolean DeleteCategory(String category) {
-        return this.category.remove(category);
     }
 
     public void PrintExpense() {
@@ -89,7 +80,7 @@ public class Expense implements Comparable<Expense> {
         return amount;
     }
 
-    public Set<String> getCategory() {
+    public String getCategory() {
         return category;
     }
 
@@ -114,7 +105,7 @@ public class Expense implements Comparable<Expense> {
         this.amount = amount;
     }
 
-    public void setCategory(Set<String> category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 }
