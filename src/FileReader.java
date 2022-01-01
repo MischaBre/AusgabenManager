@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -58,33 +59,57 @@ public class FileReader {
 
     }
 
-    public List<Expense> LoadExpensesFromCSVDKB(String fileName, String keyword) {
+    public List<Expense> LoadExpensesFromCSV(String fileName, String keyword, String banksettings) {
         List<Expense> expenses = new ArrayList<>();
         try {
             File file = new File(fileName);
-            Scanner myScanner = new Scanner(file);
+            Scanner myScanner = new Scanner(file, StandardCharsets.ISO_8859_1);
             myScanner.useDelimiter(";");
-            myScanner.nextLine();
+            switch (banksettings) {
+                case "DKB Giro" -> myScanner.nextLine();
+                case "DKB VISA" -> {
+                    for (int i = 0; i < 7; i++) {
+                        myScanner.nextLine();
+                    }
+                }
+                default -> {
+                    //nix
+                }
+            }
             String[] data;
             while (myScanner.hasNextLine()) {
                 String line = myScanner.nextLine();
-                byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
-                String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8).replaceAll("\"", "");
-                //do something with data
-                data = utf8EncodedString.split(";");
-                if (data[2].equals(keyword)) {
-                    expenses.add(new Expense(
-                            LocalDate.parse(data[1].trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                data = line.replaceAll("\"", "").split(";");
+                switch (banksettings) {
+                    case "DKB Giro" -> {
+                        if (data[2].equals(keyword)) {
+                            expenses.add(new Expense(
+                                    LocalDate.parse(data[1].trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                                    data[3].trim(),
+                                    data[5].trim(),
+                                    data[4].trim().replace("/\s{2,}/", ""),
+                                    -1 * Double.parseDouble(data[7].trim().replace(".", "").replace(',', '.'))
+                            ));
+                        }
+                    }
+                    case "DKB VISA" -> expenses.add(new Expense(
+                            LocalDate.parse(data[2].trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                             data[3].trim(),
-                            data[5].trim(),
-                            data[4].trim().replace("/\s{2,}/",""),
-                            -1 * Double.parseDouble(data[7].trim().replace(".","").replace(',','.'))
-                    ));
+                            "",
+                            "",
+                            -1 * Double.parseDouble(data[4].trim().replace(".", "").replace(',', '.'))
+                        ));
+                    default -> {
+                        //nix
+                    }
                 }
             }
             myScanner.close();
         } catch (FileNotFoundException e) {
-            System.out.println("Error");
+            System.out.println("Error: File not found.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error: IOException.");
             e.printStackTrace();
         }
         return expenses;

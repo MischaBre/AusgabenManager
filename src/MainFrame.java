@@ -1,11 +1,6 @@
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
@@ -24,13 +19,20 @@ public class MainFrame extends JFrame{
     private JLabel catInfoLabel;
     private JLabel catAmountLabel;
     private JComboBox<String> banksettingsBox;
+    private JCheckBox uncategorizedCheckBox;
+    private JTextField filterField;
+    private JLabel sumLabel;
+    private JLabel catLabel;
     private DefaultComboBoxModel<String> banksettingsJCBoxModel;
     private DefaultListModel<Expense> expenseJListModel;
     private DefaultComboBoxModel<String> categoriesJCBoxModel;
+
     private List<Expense> expenses;
     private Expense selectedExpense;
     private TreeMap<String, Double> categories;
     private FileReader fileReader;
+    private Double sumExpenses;
+    private Double sumCatExpenses;
 
     public MainFrame(String title) {
                                                                 //JFrame-stuff
@@ -45,32 +47,36 @@ public class MainFrame extends JFrame{
 
                                                                 //ActionListeners
         ladenButton.addActionListener(e -> {
-
             expenses = OpenFile(expenses);
-
-            ReloadJList(expenses);
-            banksettingsBox.setEnabled(false);
-            CalculateCategoryAmounts();
+            if (expenses.size() > 0) {
+                ReloadJList(expenses);
+                banksettingsBox.setEnabled(false);
+                categoryBox.setEnabled(true);
+                filterField.setEnabled(true);
+                uncategorizedCheckBox.setEnabled(true);
+                CalculateCategoryAmounts();
+            }
 
         });
-        clearButton.addActionListener(e -> {
 
+        clearButton.addActionListener(e -> {
             expenseJListModel.removeAllElements();
             expenses.clear();
             banksettingsBox.setEnabled(true);
+            categoryBox.setEnabled(false);
+            filterField.setEnabled(false);
+            uncategorizedCheckBox.setEnabled(false);
             CalculateCategoryAmounts();
-
         });
-        expenseJList.addListSelectionListener(e -> {
 
+        expenseJList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 selectedExpense = GetSelectedExpense();
                 ShowExpenseDetails(selectedExpense);
             }
-
         });
-        categoryBox.addItemListener(e -> {
 
+        categoryBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && selectedExpense != null) {
                 String selectedCategory = GetSelectedCategory();
                 if (!selectedExpense.getCategory().equals(selectedCategory)) {
@@ -78,23 +84,27 @@ public class MainFrame extends JFrame{
                         selectedExpense.setCategory(selectedCategory);
                         int setAllExpenses = JOptionPane.showConfirmDialog(null, "Sollen die Ausgaben mit dem gleichen Absender der gleichen Kategorie hinzugefügt werden?");
                         if (setAllExpenses == JOptionPane.YES_OPTION) {
-                            expenses.stream().filter(exp -> exp.getConsignorNumber().equals(selectedExpense.getConsignorNumber())).forEach(exp -> exp.setCategory(selectedCategory));
+                            expenses.stream().filter(exp -> exp.getConsignor().equals(selectedExpense.getConsignor())).forEach(exp -> exp.setCategory(selectedCategory));
                         }
 
                     } else {
                         selectedExpense.setCategory("");
                     }
+                    ReloadJList(expenses);
                     CalculateCategoryAmounts();
                 }
             }
-
         });
+
+        uncategorizedCheckBox.addActionListener(e -> ReloadJList(expenses));
+
+        filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> ReloadJList(expenses));
     }
 
     public static void main(String[] args) {
 
         JFrame frame = new MainFrame("Ausgabenmanager");
-        frame.setMinimumSize(new Dimension(1050,528));
+        frame.setMinimumSize(new Dimension(1150,528));
         frame.setVisible(true);
 
         System.out.println("Program start");
@@ -138,7 +148,7 @@ public class MainFrame extends JFrame{
         int choice = chooser.showOpenDialog(null);
 
         if (choice == JFileChooser.APPROVE_OPTION) {
-            expenseList = fileReader.LoadExpensesFromCSVDKB(chooser.getSelectedFile().getName(), "Lastschrift");
+            expenseList = fileReader.LoadExpensesFromCSV(chooser.getSelectedFile().getName(), "Lastschrift", GetSelectedBanksettings());
         }
         return expenseList;
     }
@@ -153,6 +163,10 @@ public class MainFrame extends JFrame{
         }
     }
 
+    private String GetSelectedBanksettings() {
+        return (String) banksettingsBox.getSelectedItem();
+    }
+
     private String GetSelectedCategory() {
         return (String) categoryBox.getSelectedItem();
     }
@@ -165,6 +179,17 @@ public class MainFrame extends JFrame{
                 categories.replace(e.getCategory(),categories.get(e.getCategory())+e.getAmount());
             }
         }
+
+        sumExpenses = 0.0;
+        expenses.forEach(e -> sumExpenses += e.getAmount());
+
+        sumCatExpenses = 0.0;
+        expenses.stream()
+                .filter(e -> !e.getCategory().equals(""))
+                .forEach(e -> sumCatExpenses += e.getAmount());
+
+        sumLabel.setText(String.format("%,.02f €", sumExpenses));
+        catLabel.setText(String.format("%,.02f €", sumCatExpenses));
         catAmountLabel.setText(TreeMapToString(categories, 1));
     }
 
@@ -189,7 +214,7 @@ public class MainFrame extends JFrame{
         } else {
             dateLabel.setText(" ");
             consignorLabel.setText(" ");
-            amountLabel.setText(" €");
+            amountLabel.setText("0,00 €");
             detailTextArea.setText(" ");
             categoryBox.setSelectedIndex(0);
         }
@@ -197,8 +222,14 @@ public class MainFrame extends JFrame{
 
     private void ReloadJList(List<Expense> expenses) {
         expenseJListModel.clear();
-        for (Expense e : expenses) {
-            expenseJListModel.addElement(e);
+        if (uncategorizedCheckBox.isSelected()) {
+            expenses.stream()
+                    .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()) && e.getCategory().equals(""))
+                    .forEach(e -> expenseJListModel.addElement(e));
+        } else {
+            expenses.stream()
+                    .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()))
+                    .forEach(e -> expenseJListModel.addElement(e));
         }
     }
 
