@@ -9,7 +9,7 @@ import java.util.*;
 public class FileReader {
 
     private TreeMap<String, Double> categories;
-    private TreeSet<String> banksettings;
+    private TreeSet<Banksetting> banksettings;
 
     public FileReader() {
 
@@ -24,7 +24,6 @@ public class FileReader {
         try {
             File file = new File(fileName);
             Scanner myScanner = new Scanner(file);
-            myScanner.useDelimiter(";");
             while (myScanner.hasNextLine()) {
                 String line = myScanner.nextLine().trim();
                 //do something with data
@@ -44,7 +43,7 @@ public class FileReader {
                     default:
                         switch (type) {
                             case 1 -> categories.put(line, 0.0);
-                            case 2 -> banksettings.add(line);
+                            case 2 -> banksettings.add(ParseBanksettings(line));
                             default -> {
                             }
                         }
@@ -59,50 +58,36 @@ public class FileReader {
 
     }
 
-    public List<Expense> LoadExpensesFromCSV(String fileName, String keyword, String banksettings) {
+    private Banksetting ParseBanksettings(String input) {
+        String[] i = input.split("=");
+        return new Banksetting(i[0],i[1].split(","));
+    }
+
+    public List<Expense> LoadExpensesFromCSV(String fileName, String keyword, Banksetting banksetting) {
         List<Expense> expenses = new ArrayList<>();
+        int[] banksettingInputLines = banksetting.getInputLines();
         try {
             File file = new File(fileName);
             Scanner myScanner = new Scanner(file, StandardCharsets.ISO_8859_1);
             myScanner.useDelimiter(";");
-            switch (banksettings) {
-                case "DKB Giro" -> myScanner.nextLine();
-                case "DKB VISA" -> {
-                    for (int i = 0; i < 7; i++) {
-                        myScanner.nextLine();
-                    }
-                }
-                default -> {
-                    //nix
-                }
+
+            for (int i = 0; i < banksetting.getSkipLines(); i++) {
+                myScanner.nextLine();
             }
             String[] data;
             while (myScanner.hasNextLine()) {
                 String line = myScanner.nextLine();
-                data = line.replaceAll("\"", "").split(";");
-                switch (banksettings) {
-                    case "DKB Giro" -> {
-                        if (data[2].equals(keyword)) {
-                            expenses.add(new Expense(
-                                    LocalDate.parse(data[1].trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                                    data[3].trim(),
-                                    data[5].trim(),
-                                    data[4].trim().replace("/\s{2,}/", ""),
-                                    -1 * Double.parseDouble(data[7].trim().replace(".", "").replace(',', '.'))
-                            ));
-                        }
-                    }
-                    case "DKB VISA" -> expenses.add(new Expense(
-                            LocalDate.parse(data[2].trim(), DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                            data[3].trim(),
-                            "",
-                            "",
-                            -1 * Double.parseDouble(data[4].trim().replace(".", "").replace(',', '.'))
-                        ));
-                    default -> {
-                        //nix
-                    }
+                if (banksetting.isReplaceQuotes()) {
+                    line = line.replaceAll("\"", "");
                 }
+                data = line.split(banksetting.getDelimiter());
+                expenses.add(new Expense(
+                        LocalDate.parse(data[banksettingInputLines[0]].trim(), DateTimeFormatter.ofPattern(banksetting.getDateFormat())),
+                        banksettingInputLines[1] > 0 ? data[banksettingInputLines[1]].trim() : "",
+                        banksettingInputLines[2] > 0 ? data[banksettingInputLines[2]].trim() : "",
+                        banksettingInputLines[3] > 0 ? data[banksettingInputLines[3]].trim().replace("/\s{2,}/", "") : "",
+                        -1 * Double.parseDouble(data[banksettingInputLines[4]].trim().replace(".", "").replace(',', '.'))
+                ));
             }
             myScanner.close();
         } catch (FileNotFoundException e) {
@@ -119,7 +104,7 @@ public class FileReader {
         return categories;
     }
 
-    public TreeSet<String> getBanks() {
+    public TreeSet<Banksetting> getBanks() {
         return banksettings;
     }
 }

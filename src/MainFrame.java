@@ -18,12 +18,12 @@ public class MainFrame extends JFrame{
     private JLabel dateLabel;
     private JLabel catInfoLabel;
     private JLabel catAmountLabel;
-    private JComboBox<String> banksettingsBox;
+    private JComboBox<Banksetting> banksettingsBox;
     private JCheckBox uncategorizedCheckBox;
     private JTextField filterField;
     private JLabel sumLabel;
     private JLabel catLabel;
-    private DefaultComboBoxModel<String> banksettingsJCBoxModel;
+    private DefaultComboBoxModel<Banksetting> banksettingsJCBoxModel;
     private DefaultListModel<Expense> expenseJListModel;
     private DefaultComboBoxModel<String> categoriesJCBoxModel;
 
@@ -163,8 +163,8 @@ public class MainFrame extends JFrame{
         }
     }
 
-    private String GetSelectedBanksettings() {
-        return (String) banksettingsBox.getSelectedItem();
+    private Banksetting GetSelectedBanksettings() {
+        return (Banksetting) banksettingsBox.getSelectedItem();
     }
 
     private String GetSelectedCategory() {
