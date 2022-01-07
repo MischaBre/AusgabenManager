@@ -27,6 +27,7 @@ public class MainFrame extends JFrame{
     private JLabel sumLabel;
     private JLabel catLabel;
     private JCheckBox onlyPositiveCheckBox;
+    private JCheckBox onlyOneCBox;
 
     private final JMenuBar menuBar = new JMenuBar();
     private final JMenu menu = new JMenu("Datei");
@@ -72,19 +73,20 @@ public class MainFrame extends JFrame{
 
         categoryBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && selectedExpense != null) {
+                Expense currentExpense = selectedExpense;
                 String selectedCategory = GetSelectedCategory();
                 if (!selectedExpense.getCategory().equals(selectedCategory)) {
-                    if (categoryBox.getSelectedIndex() != 0) {
-                        selectedExpense.setCategory(selectedCategory);
+                    String setToCategory = categoryBox.getSelectedIndex() != 0 ? selectedCategory : "";
+                    selectedExpense.setCategory(setToCategory);
+                    if (!onlyOneCBox.isSelected()) {
                         int setAllExpenses = JOptionPane.showConfirmDialog(null, "Sollen die Ausgaben mit dem gleichen Absender der gleichen Kategorie hinzugefügt werden?");
                         if (setAllExpenses == JOptionPane.YES_OPTION) {
-                            expenses.stream().filter(exp -> exp.getConsignor().equals(selectedExpense.getConsignor())).forEach(exp -> exp.setCategory(selectedCategory));
+                            expenses.stream().filter(exp -> exp.getConsignor().equals(selectedExpense.getConsignor())).forEach(exp -> exp.setCategory(setToCategory));
                         }
-
-                    } else {
-                        selectedExpense.setCategory("");
                     }
                     ReloadJList(expenses);
+                    selectedExpense = currentExpense;
+                    expenseJList.setSelectedIndex(expenseJListModel.indexOf(selectedExpense));
                     CalculateCategoryAmounts();
                 }
             }
@@ -135,12 +137,14 @@ public class MainFrame extends JFrame{
 
     public static void main(String[] args) {
 
-        JFrame frame = new MainFrame("Ausgabenmanager");
-        frame.setMinimumSize(new Dimension(1150,528));
-
         if (System.getProperty("os.name").toLowerCase().contains("mac")) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
         }
+
+        JFrame frame = new MainFrame("Ausgabenmanager");
+        frame.setMinimumSize(new Dimension(1150,528));
+
+
 
         frame.setVisible(true);
 
@@ -186,7 +190,7 @@ public class MainFrame extends JFrame{
         categories = fileReader.getCategories();
         categoriesJCBoxModel = new DefaultComboBoxModel<>();
         categoryBox.setModel(categoriesJCBoxModel);
-        categoriesJCBoxModel.addElement("<keine>");
+        categoriesJCBoxModel.addElement("");
         categoriesJCBoxModel.addAll(categories.keySet());
         categoryBox.setEnabled(false);
 
@@ -265,6 +269,7 @@ public class MainFrame extends JFrame{
             filterField.setEnabled(true);
             uncategorizedCheckBox.setEnabled(true);
             onlyPositiveCheckBox.setEnabled(true);
+            onlyOneCBox.setEnabled(true);
             CalculateCategoryAmounts();
         }
     }
@@ -279,6 +284,7 @@ public class MainFrame extends JFrame{
         filterField.setEnabled(false);
         uncategorizedCheckBox.setEnabled(false);
         onlyPositiveCheckBox.setEnabled(false);
+        onlyOneCBox.setEnabled(true);
         CalculateCategoryAmounts();
     }
 
