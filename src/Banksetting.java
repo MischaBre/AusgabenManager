@@ -2,12 +2,13 @@ import java.util.Arrays;
 
 public class Banksetting implements Comparable<Banksetting>{
 
-    private String name;
-    private int skipLines;
-    private String delimiter;
-    private boolean replaceQuotes;
-    private String dateFormat;
-    private int[] inputLines;
+    private final String name;
+    private final int skipLines;
+    private final String delimiter;
+    private final boolean replaceQuotes;
+    private final String dateFormat;
+    private final String charSet;
+    private final int[] inputLines;
 
     public Banksetting(String name, String[] input) {
         this.name = name;
@@ -15,6 +16,7 @@ public class Banksetting implements Comparable<Banksetting>{
         this.delimiter = input[1];
         this.replaceQuotes = Boolean.parseBoolean(input[2]);
         this.dateFormat = input[4];
+        this.charSet = input[9];
         this.inputLines = new int[] {
                 Integer.parseInt(input[3]),
                 Integer.parseInt(input[5]),
@@ -51,6 +53,10 @@ public class Banksetting implements Comparable<Banksetting>{
 
     public String getDateFormat() {
         return dateFormat;
+    }
+
+    public String getCharSet() {
+        return charSet;
     }
 
     public int[] getInputLines() {

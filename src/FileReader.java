@@ -9,8 +9,8 @@ import java.util.*;
 
 public class FileReader {
 
-    private TreeMap<String, Double> categories;
-    private TreeSet<Banksetting> banksettings;
+    private final TreeMap<String, Double> categories;
+    private final TreeSet<Banksetting> banksettings;
 
     public FileReader() {
 
@@ -69,7 +69,7 @@ public class FileReader {
         int[] banksettingInputLines = banksetting.getInputLines();
         try {
             File file = new File(fileName);
-            Scanner myScanner = new Scanner(file, StandardCharsets.ISO_8859_1);
+            Scanner myScanner = new Scanner(file, banksetting.getCharSet());
             myScanner.useDelimiter(";");
 
             for (int i = 0; i < banksetting.getSkipLines(); i++) {
@@ -95,9 +95,6 @@ public class FileReader {
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not found.");
             e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Error: IOException.");
-            e.printStackTrace();
         }
         return expenses;
     }
@@ -108,6 +105,9 @@ public class FileReader {
             File file = new File(fileName);
             Scanner myScanner = new Scanner(file, StandardCharsets.UTF_8);
             myScanner.useDelimiter(";");
+            if (!myScanner.nextLine().equals("emf_file")) {
+                throw new IOException("Falsches Dateiformat");
+            }
             String[] data;
             while (myScanner.hasNextLine()) {
                 String line = myScanner.nextLine();
@@ -128,9 +128,10 @@ public class FileReader {
         return expenses;
     }
 
-    public void SaveExpensesToCSV(String filename, List<Expense> expenses) throws FileNotFoundException {
+    public void SaveExpensesToEMF(String filename, List<Expense> expenses) throws FileNotFoundException {
         File file = new File(filename);
         try (PrintWriter pw = new PrintWriter(file)) {
+            pw.println("emf_file");
             expenses.stream()
                     .map(e -> e.GetCSVExpenseString(";"))
                     .forEach(pw::println);
