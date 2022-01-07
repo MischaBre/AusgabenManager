@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Expense implements Comparable<Expense> {
 
@@ -26,13 +27,13 @@ public class Expense implements Comparable<Expense> {
         return (category.equals("") ? "_ " : "x ") + date + " " + consignor + " " + amount;
     }
 
-    public Expense(LocalDate date, String consignor, String consignorNumber, String detail, double amount) {
+    public Expense(LocalDate date, String consignor, String consignorNumber, String detail, double amount, String category) {
         this.date = date;
-        this.consignor = consignor;
+        this.consignor = consignor.replace(";", "");
         this.consignorNumber = consignorNumber;
-        this.detail = detail;
+        this.detail = detail.replace(";", "");
         this.amount = amount;
-        this.category = "";
+        this.category = category;
         this.hash = HashThis(GetExpenseString());
     }
 
@@ -54,7 +55,9 @@ public class Expense implements Comparable<Expense> {
 
     //Getter
 
-    public String GetNiceExpenseString() { return date + " " + consignor + " " + consignorNumber + " " + detail +" " + amount + " "; }
+    public String GetCSVExpenseString(String delimiter) {
+        return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + delimiter + consignor + delimiter + consignorNumber + delimiter + detail + delimiter + amount + delimiter + category;
+    }
 
     public String GetExpenseString() { return date + consignor  + consignorNumber + detail + amount; }
 
