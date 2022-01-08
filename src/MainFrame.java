@@ -9,10 +9,6 @@ import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame{
     private JPanel mainPanel;
-    private JButton importButton;
-    private JButton clearButton;
-    private JButton speichernButton;
-    private JButton openButton;
     private JList<Expense> expenseJList;
     private JTextArea detailTextArea;
     private JComboBox<String> categoryBox;
@@ -65,6 +61,8 @@ public class MainFrame extends JFrame{
                                                                 //ActionListeners
 
         expenseJList.addListSelectionListener(e -> {
+            //getValueIsAdjusting verhindert doppeltes Aufrufen des Listeners.
+            // selectedExpense wird aktualisiert und Details angezeigt.
             if (!e.getValueIsAdjusting()) {
                 selectedExpense = GetSelectedExpense();
                 ShowExpenseDetails(selectedExpense);
@@ -93,15 +91,21 @@ public class MainFrame extends JFrame{
         });
 
         uncategorizedCheckBox.addActionListener(e -> {
+            //Sollen nur unkategorisierte Ausgaben angezeigt werden, wird die Liste
+            //entsprechend aktualisiert. Die Abfrage der CheckBox ist in ReloadJList()
             ReloadJList(expenses);
         });
 
         onlyPositiveCheckBox.addActionListener(e -> {
+            //sollen nur positive Ausgaben berücksichtigt werden, wird die Liste
+            //entsprechend aktualisiert und die Auswertung neuberechnet. Die Abfrage der CheckBox
+            //ist in CalculateCategoryAmounts()
             ReloadJList(expenses);
             CalculateCategoryAmounts();
         });
 
         filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
+            //Die Liste wird entsprechend des Filters in filterField gefiltert (passiert alles in ReloadJList())
             ReloadJList(expenses);
         });
 
