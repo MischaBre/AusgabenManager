@@ -138,6 +138,14 @@ public class FileReader {
         }
     }
 
+    public void SaveExpenseSummaryToTXT(String filename, String description, TreeMap<String, Double> categories) throws FileNotFoundException {
+        File file = new File(filename);
+        try (PrintWriter pw = new PrintWriter(file)) {
+            pw.println("Ausgabenmanager - " + description);
+            categories.forEach((k,v) -> pw.println(String.format("%s\t%,.02f",k, v)));
+        }
+    }
+
     public TreeMap<String, Double> getCategories() {
         return categories;
     }

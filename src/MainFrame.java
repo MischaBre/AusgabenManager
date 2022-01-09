@@ -32,6 +32,7 @@ public class MainFrame extends JFrame{
     private final JMenuItem saveNewFileMenu = new JMenuItem("Datei speichern unter...");
     private final JMenuItem closeFileMenu = new JMenuItem("Datei schließen");
     private final JMenuItem importFileMenu = new JMenuItem("CSV importieren");
+    private final JMenuItem exportFileMenu = new JMenuItem("Auswertung als .txt exportieren");
     private final JMenuItem exitMenu = new JMenuItem("Programm schließen");
 
 
@@ -133,6 +134,20 @@ public class MainFrame extends JFrame{
             UISettingsAfterOpen();
         });
 
+        exportFileMenu.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            int choice = chooser.showSaveDialog(null);
+
+            if (choice == JFileChooser.APPROVE_OPTION) {
+                try {
+                    fileReader.SaveExpenseSummaryToTXT(chooser.getSelectedFile().getAbsolutePath(), savedFilePath, categories);
+                } catch (FileNotFoundException ex) {
+                    System.out.println("Error");
+                    ex.printStackTrace();
+                }
+            }
+        });
+
         exitMenu.addActionListener(e -> {
             System.exit(0);
         });
@@ -167,6 +182,7 @@ public class MainFrame extends JFrame{
         menu.addSeparator();
 
         menu.add(importFileMenu);
+        menu.add(exportFileMenu);
         menu.addSeparator();
 
         menu.add(exitMenu);
@@ -252,7 +268,7 @@ public class MainFrame extends JFrame{
             try {
                 fileReader.SaveExpensesToEMF(chooser.getSelectedFile().getAbsolutePath(), expenses);
                 savedFilePath = chooser.getSelectedFile().getAbsolutePath();
-                this.setTitle("Ausgabenmanager - " + savedFilePath);
+                UISettingsAfterOpen();
             } catch (FileNotFoundException ex) {
                 System.out.println("Error");
                 ex.printStackTrace();
