@@ -290,6 +290,7 @@ public class MainFrame extends JFrame{
             uncategorizedCheckBox.setEnabled(true);
             onlyPositiveCheckBox.setEnabled(true);
             onlyOneCBox.setEnabled(true);
+            filterField.setText("");
             CalculateCategoryAmounts();
         }
     }
@@ -305,6 +306,7 @@ public class MainFrame extends JFrame{
         uncategorizedCheckBox.setEnabled(false);
         onlyPositiveCheckBox.setEnabled(false);
         onlyOneCBox.setEnabled(true);
+        filterField.setText("");
         CalculateCategoryAmounts();
     }
 
@@ -386,7 +388,7 @@ public class MainFrame extends JFrame{
                 .sorted(Expense::compareTo)
                 .filter(e -> e.getAmount() > 0.0 || !onlyPositiveCheckBox.isSelected())
                 .filter(e -> e.getCategory().equals("") || !uncategorizedCheckBox.isSelected())
-                .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()))
+                .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()) || e.getCategory().toLowerCase().contains(filterField.getText().toLowerCase()))
                 .forEach(e -> expenseJListModel.addElement(e));
     }
 
