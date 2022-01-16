@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.FileNotFoundException;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +26,10 @@ public class MainFrame extends JFrame{
     private JLabel catLabel;
     private JCheckBox onlyPositiveCheckBox;
     private JCheckBox onlyOneCBox;
+    private JButton detailFrameButton;
+
+    private DetailFrame detailFrame;
+
 
     private final JMenuBar menuBar = new JMenuBar();
     private final JMenu menu = new JMenu("Datei");
@@ -137,6 +143,13 @@ public class MainFrame extends JFrame{
             System.exit(0);
         });
 
+        detailFrameButton.addActionListener(e -> {
+            if (detailFrame == null) {
+                detailFrame = new DetailFrame("Ausgaben-Analyse", expenses);
+                detailFrame.setVisible(true);
+            }
+
+        });
     }
 
     public static void main(String[] args) {
