@@ -283,6 +283,7 @@ public class MainFrame extends JFrame{
             uncategorizedCheckBox.setEnabled(true);
             onlyPositiveCheckBox.setEnabled(true);
             onlyOneCBox.setEnabled(true);
+            filterField.setText("");
             detailFrame = null;
             CalculateCategoryAmounts();
         }
@@ -299,6 +300,7 @@ public class MainFrame extends JFrame{
         uncategorizedCheckBox.setEnabled(false);
         onlyPositiveCheckBox.setEnabled(false);
         onlyOneCBox.setEnabled(true);
+        filterField.setText("");
         detailFrame = null;
         CalculateCategoryAmounts();
     }
