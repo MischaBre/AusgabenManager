@@ -145,10 +145,10 @@ public class MainFrame extends JFrame{
 
         detailFrameButton.addActionListener(e -> {
             if (detailFrame == null) {
-                detailFrame = new DetailFrame("Ausgaben-Analyse", expenses);
-                detailFrame.setVisible(true);
+                detailFrame = new DetailFrame("Ausgaben-Analyse", expenses, categories);
+                detailFrame.setMinimumSize(new Dimension(900,550));
             }
-
+            detailFrame.setVisible(true);
         });
     }
 
@@ -159,12 +159,8 @@ public class MainFrame extends JFrame{
         }
 
         JFrame frame = new MainFrame("Ausgabenmanager");
-        frame.setMinimumSize(new Dimension(1150,528));
-
-
-
+        frame.setMinimumSize(new Dimension(1200,580));
         frame.setVisible(true);
-
 
         System.out.println("Program start");
 
@@ -287,6 +283,7 @@ public class MainFrame extends JFrame{
             uncategorizedCheckBox.setEnabled(true);
             onlyPositiveCheckBox.setEnabled(true);
             onlyOneCBox.setEnabled(true);
+            detailFrame = null;
             CalculateCategoryAmounts();
         }
     }
@@ -302,6 +299,7 @@ public class MainFrame extends JFrame{
         uncategorizedCheckBox.setEnabled(false);
         onlyPositiveCheckBox.setEnabled(false);
         onlyOneCBox.setEnabled(true);
+        detailFrame = null;
         CalculateCategoryAmounts();
     }
 
@@ -326,31 +324,26 @@ public class MainFrame extends JFrame{
     private void CalculateCategoryAmounts() {
         categories.replaceAll((k,v) -> v = 0.0);
 
+        sumExpenses = 0.0;
+        sumCatExpenses = 0.0;
         for (Expense e : expenses) {
-            if (!e.getCategory().equals("") && (!onlyPositiveCheckBox.isSelected() || e.getAmount() > 0.0)) {
-                categories.replace(e.getCategory(),categories.get(e.getCategory())+e.getAmount());
+            if ((!onlyPositiveCheckBox.isSelected() || e.getAmount() > 0.0)) {
+                sumExpenses += e.getAmount();
+                if (!e.getCategory().equals("")) {
+                    categories.replace(e.getCategory(),categories.get(e.getCategory())+e.getAmount());
+                    sumCatExpenses += e.getAmount();
+                }
             }
         }
 
-        sumExpenses = 0.0;
-        expenses.stream()
-                .filter(e -> !onlyPositiveCheckBox.isSelected() || e.getAmount() > 0.0)
-                .forEach(e -> sumExpenses += e.getAmount());
-
-        sumCatExpenses = 0.0;
-        expenses.stream()
-                .filter(e -> !onlyPositiveCheckBox.isSelected() || e.getAmount() > 0.0)
-                .filter(e -> !e.getCategory().equals(""))
-                .forEach(e -> sumCatExpenses += e.getAmount());
-
         sumLabel.setText(String.format("%,.02f €", sumExpenses));
         catLabel.setText(String.format("%,.02f €", sumCatExpenses));
-        catAmountLabel.setText(TreeMapToString(categories, 1));
+        catAmountLabel.setText(TreeMapToString(categories, true));
     }
 
     private void ShowCategoryAmounts() {
-        catInfoLabel.setText(TreeMapToString(categories, 0));
-        catAmountLabel.setText(TreeMapToString(categories, 1));
+        catInfoLabel.setText(TreeMapToString(categories, false));
+        catAmountLabel.setText(TreeMapToString(categories, true));
     }
                                                                 //Expense-related functions
 
@@ -383,7 +376,7 @@ public class MainFrame extends JFrame{
                 .sorted(Expense::compareTo)
                 .filter(e -> e.getAmount() > 0.0 || !onlyPositiveCheckBox.isSelected())
                 .filter(e -> e.getCategory().equals("") || !uncategorizedCheckBox.isSelected())
-                .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()))
+                .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()) || e.getCategory().toLowerCase().contains((filterField.getText().toLowerCase())))
                 .forEach(e -> expenseJListModel.addElement(e));
     }
 
@@ -397,11 +390,11 @@ public class MainFrame extends JFrame{
         expenses.forEach(Expense::PrintExpense);
     }
 
-    private String TreeMapToString(TreeMap<String, Double> data, int value) {
+    private String TreeMapToString(TreeMap<String, Double> data, boolean isValue) {
         StringBuilder string = new StringBuilder();
-        String alignment = (value == 0 ? "left" : "right");
+        String alignment = (isValue ? "right" : "left");
         string.append("<html>");
-        data.forEach((k,v) -> string.append("<p align=\"").append(alignment).append("\">").append(value == 0 ? k : String.format("%,.2f €", v)).append("</p>"));
+        data.forEach((k,v) -> string.append("<p align=\"").append(alignment).append("\">").append(isValue ? String.format("%,.2f €", v) : k).append("</p>"));
         string.append("</html>");
         return string.toString();
     }
