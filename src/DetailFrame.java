@@ -15,7 +15,7 @@ public class DetailFrame extends JFrame{
         this.pack();
 
         this.expenses = expenses;
-        
+
         Initialization();
     }
 
