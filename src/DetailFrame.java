@@ -1,15 +1,16 @@
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.general.DatasetUtils;
 import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
 
 
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ public class DetailFrame extends JFrame{
     private JPanel piePanel;
     private JPanel stackedBarPanel;
     private JPanel linePanel;
+    private JPanel controlPanel;
 
     private JFreeChart pieChart;
     private ChartPanel pieChartPanel;
@@ -30,7 +32,6 @@ public class DetailFrame extends JFrame{
 
     private JFreeChart stackedBarChart;
     private ChartPanel stackedBarChartPanel;
-    private CategoryDataset stackedBarDataset;
     private DefaultCategoryDataset stackedDCBarDataset;
 
     private List<Expense> expenses;
@@ -60,7 +61,6 @@ public class DetailFrame extends JFrame{
                 }
             }
         });
-
     }
 
     private void Initialization() {
@@ -78,9 +78,9 @@ public class DetailFrame extends JFrame{
                 "Nach Monaten",
                 "Monate",
                 "€",
-                stackedBarDataset,
+                stackedDCBarDataset,
                 PlotOrientation.VERTICAL,
-                false,
+                true,
                 false,
                 false);
         stackedBarChartPanel = new ChartPanel(stackedBarChart);
@@ -88,7 +88,8 @@ public class DetailFrame extends JFrame{
     }
 
     private void RedrawStackedBarDataset() {
-        stackedBarDataset = null;
+        stackedDCBarDataset.clear();
+        //stackedBarDataset = null;
         LocalDate begin = expenses.stream()
                 .min(Expense::compareTo)
                 .get().getDate();
@@ -96,14 +97,14 @@ public class DetailFrame extends JFrame{
                 .max(Expense::compareTo)
                 .get().getDate();
         int startMonth = begin.getMonthValue();
-        int monthDifference = (int)ChronoUnit.MONTHS.between(begin, end);
+        int monthDifference = (int)ChronoUnit.MONTHS.between(begin.withDayOfMonth(1), end.withDayOfMonth(1));
 
         double[][] values = new double[categories.size()][monthDifference];
         String[] months = new String[monthDifference];
         String[] categoryStrings = new String[categories.size()];
 
         for (int i = 0; i < monthDifference; i++) {
-            months[i] = String.valueOf((startMonth + i) % 12);
+            months[i] = String.valueOf((startMonth + i - 1) % 12 + 1) ;
             int finalI = i;
             int finalC = 0;
             for (String c : categories) {
@@ -113,7 +114,7 @@ public class DetailFrame extends JFrame{
                 values[finalC][finalI] = 0.0;
                 int finalC1 = finalC;
                 expenses.stream()
-                        .filter(e -> e.getDate().getMonthValue() == finalI)
+                        .filter(e -> e.getDate().getMonthValue() == Integer.parseInt(months[finalI]))
                         .filter(e -> e.getCategory().equals(c))
                         .forEach(e -> {
                             values[finalC1][finalI] += e.getAmount();
@@ -121,7 +122,16 @@ public class DetailFrame extends JFrame{
                 finalC++;
             }
         }
-        stackedBarDataset = DatasetUtils.createCategoryDataset(categoryStrings, months, values);
+        int i = 0;
+        for (double[] a : values) {
+            int j = 0;
+            for (double b : a) {
+                stackedDCBarDataset.setValue(b, categoryStrings[i],months[j]);
+                j++;
+            }
+            i++;
+        }
+        //stackedBarDataset = DatasetUtils.createCategoryDataset(categoryStrings, months, values);
     }
 
     private void CreatePieChart() {
@@ -134,6 +144,8 @@ public class DetailFrame extends JFrame{
                 false,
                 false,
                 false);
+        PiePlot plot = (PiePlot) pieChart.getPlot();
+        plot.setSectionPaint(0, new Color(0,0,0));
         pieChartPanel = new ChartPanel(pieChart);
         piePanel.add(pieChartPanel);
     }
