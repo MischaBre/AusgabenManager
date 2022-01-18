@@ -7,12 +7,15 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
+import javax.swing.text.DateFormatter;
 
 
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.TreeMap;
@@ -31,7 +34,8 @@ public class DetailFrame extends JFrame{
 
     private JFreeChart stackedBarChart;
     private ChartPanel stackedBarChartPanel;
-    private DefaultCategoryDataset categoryDataset;
+    private DefaultCategoryDataset categoryMonthDataset;
+    //private DefaultCategoryDataset categoryDayDataset;
 
     private JFreeChart lineChart;
     private ChartPanel lineChartPanel;
@@ -70,7 +74,8 @@ public class DetailFrame extends JFrame{
     }
 
     private void InitializationData() {
-        categoryDataset = new DefaultCategoryDataset();
+        categoryMonthDataset = new DefaultCategoryDataset();
+        //categoryDayDataset = new DefaultCategoryDataset();
         pieDataset = new DefaultPieDataset();
         CalculatePieDataset();
         CalculateCategoryDataset();
@@ -88,7 +93,7 @@ public class DetailFrame extends JFrame{
                 "Nach Monaten",
                 "Monate",
                 "€",
-                categoryDataset,
+                categoryMonthDataset,
                 PlotOrientation.VERTICAL,
                 true,
                 false,
@@ -103,7 +108,7 @@ public class DetailFrame extends JFrame{
                 "Nach Monaten",
                 "Monate",
                 "€",
-                categoryDataset,
+                categoryMonthDataset,
                 PlotOrientation.VERTICAL,
                 true,
                 false,
@@ -113,7 +118,8 @@ public class DetailFrame extends JFrame{
     }
 
     private void CalculateCategoryDataset() {
-        categoryDataset.clear();
+        categoryMonthDataset.clear();
+        //categoryDayDataset.clear();
         LocalDate begin = expenses.stream()
                 .min(Expense::compareTo)
                 .get().getDate();
@@ -121,40 +127,59 @@ public class DetailFrame extends JFrame{
                 .max(Expense::compareTo)
                 .get().getDate();
         int startMonth = begin.getMonthValue();
+        //int startDay = begin.getDayOfYear();
         int monthDifference = (int)ChronoUnit.MONTHS.between(begin.withDayOfMonth(1), end.withDayOfMonth(1));
+        int dayDifference = (int)ChronoUnit.DAYS.between(begin,end);
 
-        double[][] values = new double[categories.size()][monthDifference];
+        double[][] valuesMonths = new double[categories.size()][monthDifference];
+        //double[][] valuesDays = new double[categories.size()][dayDifference];
         String[] months = new String[monthDifference];
+        //String[] days = new String[dayDifference];
         String[] categoryStrings = new String[categories.size()];
 
         for (int i = 0; i < monthDifference; i++) {
-            months[i] = String.valueOf((startMonth + i - 1) % 12 + 1) ;
+            months[i] = begin.plusMonths(i).format(DateTimeFormatter.ofPattern("MM.yyyy"));
             int finalI = i;
             int finalC = 0;
             for (String c : categories) {
-                if (i == 0) {
-                    categoryStrings[finalC] = c;
-                }
-                values[finalC][finalI] = 0.0;
                 int finalC1 = finalC;
+                if (i == 0) {
+                    categoryStrings[finalC1] = c;
+                }
+                valuesMonths[finalC1][finalI] = 0.0;
+
                 expenses.stream()
-                        .filter(e -> e.getDate().getMonthValue() == Integer.parseInt(months[finalI]))
+                        .filter(e -> e.getDate().format(DateTimeFormatter.ofPattern("MM.yyyy")).equals(months[finalI]))
                         .filter(e -> e.getCategory().equals(c))
                         .forEach(e -> {
-                            values[finalC1][finalI] += e.getAmount();
+                            valuesMonths[finalC1][finalI] += e.getAmount();
                         });
+                categoryMonthDataset.setValue(valuesMonths[finalC1][finalI], categoryStrings[finalC1], months[finalI]);
                 finalC++;
             }
         }
-        int i = 0;
-        for (double[] a : values) {
-            int j = 0;
-            for (double b : a) {
-                categoryDataset.setValue(b, categoryStrings[i],months[j]);
-                j++;
+
+        /*
+
+        @Deprecated
+        for(int i = 0; i < dayDifference; i++) {
+            days[i] = (begin.plusDays(i)).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            int finalI = i;
+            int finalC = 0;
+            for(String c : categories) {
+                valuesDays[finalC][finalI] = 0.0;
+                int finalC1 = finalC;
+                expenses.stream()
+                        .filter(e -> e.getDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")).equals(days[finalI]))
+                        .filter(e -> e.getCategory().equals(c))
+                        .forEach(e -> {
+                            valuesDays[finalC1][finalI] += e.getAmount();
+                        });
+                categoryDayDataset.setValue(valuesDays[finalC1][finalI], categoryStrings[finalC1], days[finalI]);
+                finalC++;
             }
-            i++;
         }
+        */
     }
 
     private void CreatePieChart() {
