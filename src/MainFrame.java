@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.FileNotFoundException;
 import java.time.format.DateTimeFormatter;
@@ -62,7 +60,8 @@ public class MainFrame extends JFrame{
         this.pack();
 
                                                                 //StartUp and Initialization of program
-        Initialization();
+        InitializationData();
+        InitializationUI();
 
                                                                 //ActionListeners
 
@@ -92,6 +91,7 @@ public class MainFrame extends JFrame{
                     selectedExpense = currentExpense;
                     expenseJList.setSelectedIndex(expenseJListModel.indexOf(selectedExpense));
                     CalculateCategoryAmounts();
+                    ShowCategoryAmounts();
                 }
             }
         });
@@ -108,6 +108,7 @@ public class MainFrame extends JFrame{
             //ist in CalculateCategoryAmounts()
             ReloadJList(expenses);
             CalculateCategoryAmounts();
+            ShowCategoryAmounts();
         });
 
         filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
@@ -183,40 +184,48 @@ public class MainFrame extends JFrame{
         return menuBar;
     }
 
-    private void Initialization() {
-                                                                //ExpenseList and JList initialization
+    private void InitializationData() {
+        //ExpenseList and JList initialization
         expenses = new ArrayList<>();
         expenseJListModel = new DefaultListModel<>();
-        expenseJList.setModel(expenseJListModel);
+        banksettingsJCBoxModel = new DefaultComboBoxModel<>();
+        categoriesJCBoxModel = new DefaultComboBoxModel<>();
 
-                                                                //FileReader initialization
+        //FileReader initialization
         fileReader = new FileReader();
         fileReader.LoadFromCfg("settings.ini");
         savedFilePath = "";
-
-        banksettingsJCBoxModel = new DefaultComboBoxModel<>();
-        banksettingsBox.setModel(banksettingsJCBoxModel);
-        banksettingsJCBoxModel.addAll(fileReader.getBanks());
-        banksettingsBox.setSelectedIndex(0);
-
-                                                                //Load categories
         categories = fileReader.getCategories();
-        categoriesJCBoxModel = new DefaultComboBoxModel<>();
+
+        sumExpenses = 0.0;
+        sumCatExpenses = 0.0;
+
+    }
+
+    private void InitializationUI() {
+
         categoryBox.setModel(categoriesJCBoxModel);
         categoriesJCBoxModel.addElement("");
         categoriesJCBoxModel.addAll(categories.keySet());
         categoryBox.setEnabled(false);
 
+        banksettingsBox.setModel(banksettingsJCBoxModel);
+        banksettingsJCBoxModel.addAll(fileReader.getBanks());
+        banksettingsBox.setSelectedIndex(0);
+        expenseJList.setModel(expenseJListModel);
+
                                                                 //Zeige Kategorienauswertung
         ShowCategoryAmounts();
+
+                                                                //Label initialisieren
+        dateLabel.setText(" ");
+        consignorLabel.setText(" ");
 
                                                                 //sonstiges
         this.setJMenuBar(AddMenuBar());
         saveFileMenu.setEnabled(false);
         saveNewFileMenu.setEnabled(false);
         closeFileMenu.setEnabled(false);
-        dateLabel.setText(" ");
-        consignorLabel.setText(" ");
     }
                                                                 //Open File
 
@@ -286,6 +295,7 @@ public class MainFrame extends JFrame{
             filterField.setText("");
             detailFrame = null;
             CalculateCategoryAmounts();
+            ShowCategoryAmounts();
         }
     }
 
@@ -303,6 +313,7 @@ public class MainFrame extends JFrame{
         filterField.setText("");
         detailFrame = null;
         CalculateCategoryAmounts();
+        ShowCategoryAmounts();
     }
 
                                                                 //List operations
@@ -337,13 +348,11 @@ public class MainFrame extends JFrame{
                 }
             }
         }
-
-        sumLabel.setText(String.format("%,.02f €", sumExpenses));
-        catLabel.setText(String.format("%,.02f €", sumCatExpenses));
-        catAmountLabel.setText(TreeMapToString(categories, true));
     }
 
     private void ShowCategoryAmounts() {
+        sumLabel.setText(String.format("%,.02f €", sumExpenses));
+        catLabel.setText(String.format("%,.02f €", sumCatExpenses));
         catInfoLabel.setText(TreeMapToString(categories, false));
         catAmountLabel.setText(TreeMapToString(categories, true));
     }

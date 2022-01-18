@@ -3,7 +3,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
@@ -34,6 +33,10 @@ public class DetailFrame extends JFrame{
     private ChartPanel stackedBarChartPanel;
     private DefaultCategoryDataset stackedDCBarDataset;
 
+    private JFreeChart lineChart;
+    private ChartPanel lineChartPanel;
+
+
     private List<Expense> expenses;
     private TreeSet<String> categories;
 
@@ -56,8 +59,8 @@ public class DetailFrame extends JFrame{
             }
             public void componentShown(ComponentEvent e) {
                 if (!expenses.isEmpty()) {
-                    RedrawPieChart();
-                    RedrawStackedBarDataset();
+                    CalculatePieDataset();
+                    CalculateCategoryDataset();
                 }
             }
         });
@@ -65,15 +68,18 @@ public class DetailFrame extends JFrame{
 
     private void Initialization() {
         if (!expenses.isEmpty()) {
+            CreateCategoryDataset();
+            CreatePieDataset();
+            CalculateCategoryDataset();
+
             CreatePieChart();
             CreateStackedBarChart();
+            CreateLineChart();
         }
     }
 
     private void CreateStackedBarChart() {
         stackedBarPanel.setLayout(new java.awt.BorderLayout());
-        stackedDCBarDataset = new DefaultCategoryDataset();
-        RedrawStackedBarDataset();
         stackedBarChart = ChartFactory.createStackedBarChart(
                 "Nach Monaten",
                 "Monate",
@@ -87,9 +93,28 @@ public class DetailFrame extends JFrame{
         stackedBarPanel.add(stackedBarChartPanel);
     }
 
-    private void RedrawStackedBarDataset() {
+    private void CreateLineChart() {
+        linePanel.setLayout(new java.awt.BorderLayout());
+        lineChart = ChartFactory.createLineChart(
+                "Nach Monaten",
+                "Monate",
+                "€",
+                stackedDCBarDataset,
+                PlotOrientation.VERTICAL,
+                true,
+                false,
+                false);
+        lineChartPanel = new ChartPanel(lineChart);
+        linePanel.add(lineChartPanel);
+    }
+
+    private void CreateCategoryDataset() {
+        stackedDCBarDataset = new DefaultCategoryDataset();
+        CalculateCategoryDataset();
+    }
+
+    private void CalculateCategoryDataset() {
         stackedDCBarDataset.clear();
-        //stackedBarDataset = null;
         LocalDate begin = expenses.stream()
                 .min(Expense::compareTo)
                 .get().getDate();
@@ -136,8 +161,6 @@ public class DetailFrame extends JFrame{
 
     private void CreatePieChart() {
         piePanel.setLayout(new java.awt.BorderLayout());
-        pieDataset = new DefaultPieDataset();
-        RedrawPieChart();
         pieChart = ChartFactory.createPieChart(
                 "Nach Kategorie",
                 pieDataset,
@@ -150,19 +173,19 @@ public class DetailFrame extends JFrame{
         piePanel.add(pieChartPanel);
     }
 
-    private void RedrawPieChart() {
-        pieDataset.clear();
-        calculateCategorySummary().forEach(pieDataset::setValue);
+    private void CreatePieDataset() {
+        pieDataset = new DefaultPieDataset();
+        CalculatePieDataset();
     }
 
-    private TreeMap<String, Double> calculateCategorySummary() {
+    private void CalculatePieDataset() {
+        pieDataset.clear();
         TreeMap<String, Double> dataMap = new TreeMap<String, Double>();
         categories.forEach(k -> dataMap.put(k, 0.0));
         expenses.stream()
                 .filter(e -> e.getCategory() != "")
                 .forEach(e -> dataMap.replace(e.getCategory(), dataMap.get(e.getCategory())+e.getAmount()));
-        return dataMap;
+        dataMap.forEach(pieDataset::setValue);
     }
-
 
 }
