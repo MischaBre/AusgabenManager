@@ -1,11 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.io.FileNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame{
     private JPanel mainPanel;
@@ -28,7 +25,6 @@ public class MainFrame extends JFrame{
 
     private DetailFrame detailFrame;
 
-
     private final JMenuBar menuBar = new JMenuBar();
     private final JMenu menu = new JMenu("Datei");
     private final JMenuItem openFileMenu = new JMenuItem("Datei öffnen");
@@ -38,18 +34,12 @@ public class MainFrame extends JFrame{
     private final JMenuItem importFileMenu = new JMenuItem("CSV importieren");
     private final JMenuItem exitMenu = new JMenuItem("Programm schließen");
 
+    private final ExpenseManager expenseManager;
+    private Expense selectedExpense;
 
     private DefaultComboBoxModel<Banksetting> banksettingsJCBoxModel;
     private DefaultListModel<Expense> expenseJListModel;
     private DefaultComboBoxModel<String> categoriesJCBoxModel;
-
-    private List<Expense> expenses;
-    private Expense selectedExpense;
-    private TreeMap<String, Double> categories;
-    private FileReader fileReader;
-    private String savedFilePath;
-    private Double sumExpenses;
-    private Double sumCatExpenses;
 
     public MainFrame(String title) {
                                                                 //JFrame-stuff
@@ -60,7 +50,7 @@ public class MainFrame extends JFrame{
         this.pack();
 
                                                                 //StartUp and Initialization of program
-        InitializationData();
+        expenseManager = new ExpenseManager();
         InitializationUI();
 
                                                                 //ActionListeners
@@ -84,13 +74,15 @@ public class MainFrame extends JFrame{
                     if (!onlyOneCBox.isSelected()) {
                         int setAllExpenses = JOptionPane.showConfirmDialog(null, "Sollen die Ausgaben mit dem gleichen Absender der gleichen Kategorie hinzugefügt werden?");
                         if (setAllExpenses == JOptionPane.YES_OPTION) {
-                            expenses.stream().filter(exp -> exp.getConsignor().equals(selectedExpense.getConsignor())).forEach(exp -> exp.setCategory(setToCategory));
+                            expenseManager.GetExpenseList().stream()
+                                    .filter(exp -> exp.getConsignor().equals(selectedExpense.getConsignor()))
+                                    .forEach(exp -> exp.setCategory(setToCategory));
                         }
                     }
-                    ReloadJList(expenses);
+                    ReloadJList();
                     selectedExpense = currentExpense;
                     expenseJList.setSelectedIndex(expenseJListModel.indexOf(selectedExpense));
-                    CalculateCategoryAmounts();
+                    expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
                     ShowCategoryAmounts();
                 }
             }
@@ -99,44 +91,45 @@ public class MainFrame extends JFrame{
         uncategorizedCheckBox.addActionListener(e -> {
             //Sollen nur unkategorisierte Ausgaben angezeigt werden, wird die Liste
             //entsprechend aktualisiert. Die Abfrage der CheckBox ist in ReloadJList()
-            ReloadJList(expenses);
+            ReloadJList();
         });
 
         onlyPositiveCheckBox.addActionListener(e -> {
             //sollen nur positive Ausgaben berücksichtigt werden, wird die Liste
             //entsprechend aktualisiert und die Auswertung neuberechnet. Die Abfrage der CheckBox
             //ist in CalculateCategoryAmounts()
-            ReloadJList(expenses);
-            CalculateCategoryAmounts();
+            ReloadJList();
+            expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
             ShowCategoryAmounts();
         });
 
         filterField.getDocument().addDocumentListener((SimpleDocumentListener) e -> {
             //Die Liste wird entsprechend des Filters in filterField gefiltert (passiert alles in ReloadJList())
-            ReloadJList(expenses);
+            ReloadJList();
         });
 
         openFileMenu.addActionListener(e -> {
-            expenses = OpenFile(expenses, false);
+            expenseManager.OpenFile(false, GetSelectedBanksetting());
             UISettingsAfterOpen();
         });
 
         saveFileMenu.addActionListener(e -> {
-            SaveFile(expenses);
+            expenseManager.SaveFile();
         });
 
         saveNewFileMenu.addActionListener(e -> {
-            SaveNewFile(expenses);
+            expenseManager.SaveNewFile();
+            this.setTitle("Ausgabenmanager - " + expenseManager.getSavedFilePath());
         });
 
         closeFileMenu.addActionListener(e -> {
             expenseJListModel.removeAllElements();
-            expenses.clear();
+            expenseManager.ClearExpenses();
             UISettingsAfterClose();
         });
 
         importFileMenu.addActionListener(e -> {
-            expenses = OpenFile(expenses, true);
+            expenseManager.OpenFile(true, GetSelectedBanksetting());
             UISettingsAfterOpen();
         });
 
@@ -146,7 +139,7 @@ public class MainFrame extends JFrame{
 
         detailFrameButton.addActionListener(e -> {
             if (detailFrame == null) {
-                detailFrame = new DetailFrame("Ausgaben-Analyse", expenses, categories);
+                detailFrame = new DetailFrame("Ausgaben-Analyse", expenseManager.GetExpenseList(), expenseManager.getCategories());
                 detailFrame.setMinimumSize(new Dimension(900,550));
             }
             detailFrame.setVisible(true);
@@ -184,33 +177,19 @@ public class MainFrame extends JFrame{
         return menuBar;
     }
 
-    private void InitializationData() {
-        //ExpenseList and JList initialization
-        expenses = new ArrayList<>();
+    private void InitializationUI() {
+
         expenseJListModel = new DefaultListModel<>();
         banksettingsJCBoxModel = new DefaultComboBoxModel<>();
         categoriesJCBoxModel = new DefaultComboBoxModel<>();
 
-        //FileReader initialization
-        fileReader = new FileReader();
-        fileReader.LoadFromCfg("settings.ini");
-        savedFilePath = "";
-        categories = fileReader.getCategories();
-
-        sumExpenses = 0.0;
-        sumCatExpenses = 0.0;
-
-    }
-
-    private void InitializationUI() {
-
         categoryBox.setModel(categoriesJCBoxModel);
         categoriesJCBoxModel.addElement("");
-        categoriesJCBoxModel.addAll(categories.keySet());
+        categoriesJCBoxModel.addAll(expenseManager.GetCategoryStringSet());
         categoryBox.setEnabled(false);
 
         banksettingsBox.setModel(banksettingsJCBoxModel);
-        banksettingsJCBoxModel.addAll(fileReader.getBanks());
+        banksettingsJCBoxModel.addAll(expenseManager.GetBanksettingSet());
         banksettingsBox.setSelectedIndex(0);
         expenseJList.setModel(expenseJListModel);
 
@@ -227,66 +206,16 @@ public class MainFrame extends JFrame{
         saveNewFileMenu.setEnabled(false);
         closeFileMenu.setEnabled(false);
     }
-                                                                //Open File
-
-    private List<Expense> OpenFile(List<Expense> oldExpenseList, boolean isImport) {
-        List<Expense> expenseList = new ArrayList<>();
-
-        if (oldExpenseList != null) {
-            expenseList = oldExpenseList;
-        }
-        JFileChooser chooser = new JFileChooser();
-        int choice = chooser.showOpenDialog(null);
-
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            if (isImport) {
-                expenseList = fileReader.ImportExpensesFromCSV(chooser.getSelectedFile().getAbsolutePath(), GetSelectedBanksettings());
-            } else {
-                expenseList = fileReader.LoadExpensesFromFile(chooser.getSelectedFile().getAbsolutePath());
-            }
-
-            if (expenseList.size() > 0) {
-                savedFilePath = chooser.getSelectedFile().getAbsolutePath();
-            }
-        }
-
-        return expenseList;
-    }
-
-    private void SaveFile(List<Expense> expenses) {
-        try {
-            fileReader.SaveExpensesToEMF(savedFilePath, expenses);
-        } catch (FileNotFoundException ex) {
-            System.out.println("Error");
-            ex.printStackTrace();
-        }
-    }
-
-    private void SaveNewFile(List<Expense> expenses) {
-        JFileChooser chooser = new JFileChooser();
-        int choice = chooser.showSaveDialog(null);
-
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            try {
-                fileReader.SaveExpensesToEMF(chooser.getSelectedFile().getAbsolutePath(), expenses);
-                savedFilePath = chooser.getSelectedFile().getAbsolutePath();
-                this.setTitle("Ausgabenmanager - " + savedFilePath);
-            } catch (FileNotFoundException ex) {
-                System.out.println("Error");
-                ex.printStackTrace();
-            }
-        }
-    }
 
     private void UISettingsAfterOpen() {
-        if (expenses.size() > 0) {
-            this.setTitle("Ausgabenmanager - " + savedFilePath);
-            if (savedFilePath.endsWith("emf")) {
+        if (expenseManager.GetExpenseListSize() > 0) {
+            this.setTitle("Ausgabenmanager - " + expenseManager.getSavedFilePath());
+            if (expenseManager.getSavedFilePath().endsWith("emf")) {
                 saveFileMenu.setEnabled(true);
             }
             saveNewFileMenu.setEnabled(true);
             closeFileMenu.setEnabled(true);
-            ReloadJList(expenses);
+            ReloadJList();
             banksettingsBox.setEnabled(false);
             filterField.setEnabled(true);
             uncategorizedCheckBox.setEnabled(true);
@@ -294,7 +223,8 @@ public class MainFrame extends JFrame{
             onlyOneCBox.setEnabled(true);
             filterField.setText("");
             detailFrame = null;
-            CalculateCategoryAmounts();
+
+            expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
             ShowCategoryAmounts();
         }
     }
@@ -312,7 +242,8 @@ public class MainFrame extends JFrame{
         onlyOneCBox.setEnabled(true);
         filterField.setText("");
         detailFrame = null;
-        CalculateCategoryAmounts();
+
+        expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
         ShowCategoryAmounts();
     }
 
@@ -326,35 +257,15 @@ public class MainFrame extends JFrame{
         }
     }
 
-    private Banksetting GetSelectedBanksettings() {
-        return (Banksetting) banksettingsBox.getSelectedItem();
-    }
-
     private String GetSelectedCategory() {
         return (String) categoryBox.getSelectedItem();
     }
 
-    private void CalculateCategoryAmounts() {
-        categories.replaceAll((k,v) -> v = 0.0);
-
-        sumExpenses = 0.0;
-        sumCatExpenses = 0.0;
-        for (Expense e : expenses) {
-            if ((!onlyPositiveCheckBox.isSelected() || e.getAmount() > 0.0)) {
-                sumExpenses += e.getAmount();
-                if (!e.getCategory().equals("")) {
-                    categories.replace(e.getCategory(),categories.get(e.getCategory())+e.getAmount());
-                    sumCatExpenses += e.getAmount();
-                }
-            }
-        }
-    }
-
     private void ShowCategoryAmounts() {
-        sumLabel.setText(String.format("%,.02f €", sumExpenses));
-        catLabel.setText(String.format("%,.02f €", sumCatExpenses));
-        catInfoLabel.setText(TreeMapToString(categories, false));
-        catAmountLabel.setText(TreeMapToString(categories, true));
+        sumLabel.setText(String.format("%,.02f €", expenseManager.GetSumExpenses()));
+        catLabel.setText(String.format("%,.02f €", expenseManager.GetSumCatExpenses()));
+        catInfoLabel.setText(TreeMapToString(expenseManager.getCategories(), false));
+        catAmountLabel.setText(TreeMapToString(expenseManager.getCategories(), true));
     }
                                                                 //Expense-related functions
 
@@ -381,24 +292,17 @@ public class MainFrame extends JFrame{
         }
     }
 
-    private void ReloadJList(List<Expense> expenses) {
+    private void ReloadJList() {
         expenseJListModel.clear();
-        expenses.stream()
-                .sorted(Expense::compareTo)
-                .filter(e -> e.getAmount() > 0.0 || !onlyPositiveCheckBox.isSelected())
-                .filter(e -> e.getCategory().equals("") || !uncategorizedCheckBox.isSelected())
-                .filter(e -> e.getConsignor().toLowerCase().contains(filterField.getText().toLowerCase()) || e.getCategory().toLowerCase().contains((filterField.getText().toLowerCase())))
+        expenseManager.GetFilteredExpenses(
+                onlyPositiveCheckBox.isSelected(),
+                uncategorizedCheckBox.isSelected(),
+                filterField.getText())
                 .forEach(e -> expenseJListModel.addElement(e));
     }
 
-    private List<Expense> SortExpenseListByDate(List<Expense> expenses) {
-        return expenses.stream()
-                .sorted(Expense::compareTo)
-                .collect(Collectors.toList());
-    }
-
-    private void PrintExpenseList(List<Expense> expenses) {
-        expenses.forEach(Expense::PrintExpense);
+    private Banksetting GetSelectedBanksetting() {
+        return (Banksetting) banksettingsBox.getSelectedItem();
     }
 
     private String TreeMapToString(TreeMap<String, Double> data, boolean isValue) {
