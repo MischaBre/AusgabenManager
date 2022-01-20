@@ -139,7 +139,7 @@ public class MainFrame extends JFrame{
 
         detailFrameButton.addActionListener(e -> {
             if (detailFrame == null) {
-                detailFrame = new DetailFrame("Ausgaben-Analyse", expenseManager.GetExpenseList(), expenseManager.getCategories());
+                detailFrame = new DetailFrame("Ausgaben-Analyse", expenseManager);
                 detailFrame.setMinimumSize(new Dimension(900,550));
             }
             detailFrame.setVisible(true);
@@ -153,7 +153,7 @@ public class MainFrame extends JFrame{
         }
 
         JFrame frame = new MainFrame("Ausgabenmanager");
-        frame.setMinimumSize(new Dimension(1200,580));
+        frame.setMinimumSize(new Dimension(1200,700));
         frame.setVisible(true);
 
         System.out.println("Program start");
