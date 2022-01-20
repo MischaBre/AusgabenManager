@@ -12,12 +12,16 @@ public class ExpenseManager {
 
     private List<Expense> expenses;
     private final TreeMap<String, Double> categories;
+
+    private LocalDate beginDate;
+    private LocalDate endDate;
+
     private final FileReader fileReader;
     private String savedFilePath;
     private Double sumExpenses;
     private Double sumCatExpenses;
-    private DefaultPieDataset pieDataset;
-    private DefaultCategoryDataset categoryDataset;
+    private final DefaultPieDataset pieDataset;
+    private final DefaultCategoryDataset categoryDataset;
 
     public ExpenseManager() {
         //ExpenseList and JList initialization
@@ -78,20 +82,14 @@ public class ExpenseManager {
 
     public void CalculateCategoryDataset() {
         categoryDataset.clear();
-        LocalDate begin = expenses.stream()
-                .min(Expense::compareTo)
-                .get().getDate();
-        LocalDate end = expenses.stream()
-                .max(Expense::compareTo)
-                .get().getDate();
-        int startMonth = begin.getMonthValue();
-        int monthDifference = (int) ChronoUnit.MONTHS.between(begin.withDayOfMonth(1), end.withDayOfMonth(1));
+        int startMonth = beginDate.getMonthValue();
+        int monthDifference = (int) ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1));
         double[][] valuesMonths = new double[categories.size()][monthDifference];
         String[] months = new String[monthDifference];
         String[] categoryStrings = new String[categories.size()];
 
         for (int i = 0; i < monthDifference; i++) {
-            months[i] = begin.plusMonths(i).format(DateTimeFormatter.ofPattern("MM.yyyy"));
+            months[i] = beginDate.plusMonths(i).format(DateTimeFormatter.ofPattern("MM.yyyy"));
             int finalI = i;
             int finalC = 0;
             for (String c : categories.keySet()) {
@@ -155,13 +153,11 @@ public class ExpenseManager {
 
     public void OpenFile(boolean isImport, Banksetting selectedBanksetting) {
         List<Expense> expenseList = new ArrayList<>();
-
         if (expenses != null) {
             expenseList = expenses;
         }
         JFileChooser chooser = new JFileChooser();
         int choice = chooser.showOpenDialog(null);
-
         if (choice == JFileChooser.APPROVE_OPTION) {
             if (isImport) {
                 expenseList = fileReader.ImportExpensesFromCSV(chooser.getSelectedFile().getAbsolutePath(), selectedBanksetting);
@@ -173,8 +169,15 @@ public class ExpenseManager {
                 savedFilePath = chooser.getSelectedFile().getAbsolutePath();
             }
         }
-
         expenses = expenseList;
+        if (!expenses.isEmpty()) {
+            beginDate = expenses.stream()
+                    .min(Expense::compareTo)
+                    .get().getDate();
+            endDate = expenses.stream()
+                    .max(Expense::compareTo)
+                    .get().getDate();
+        }
     }
 
     public void SaveFile() {
