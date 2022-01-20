@@ -3,23 +3,12 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
-import javax.swing.text.DateFormatter;
-
 
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class DetailFrame extends JFrame{
     private JPanel mainPanel;
@@ -35,7 +24,7 @@ public class DetailFrame extends JFrame{
     private ChartPanel stackedBarChartPanel;
     private ChartPanel lineChartPanel;
 
-    private ExpenseManager expenseManager;
+    private final ExpenseManager expenseManager;
 
     public DetailFrame(String title, ExpenseManager expenseManager) {
         super(title);
