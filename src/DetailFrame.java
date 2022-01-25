@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ItemEvent;
+import java.time.LocalDate;
 
 public class DetailFrame extends JFrame{
     private JPanel mainPanel;
@@ -16,6 +18,9 @@ public class DetailFrame extends JFrame{
     private JPanel stackedBarPanel;
     private JPanel linePanel;
     private JPanel controlPanel;
+    private JComboBox<LocalDate> fromBox;
+    private JComboBox<LocalDate> toBox;
+    private JList<String> categoryList;
 
     private JFreeChart pieChart;
     private JFreeChart stackedBarChart;
@@ -25,6 +30,9 @@ public class DetailFrame extends JFrame{
     private ChartPanel lineChartPanel;
 
     private final ExpenseManager expenseManager;
+    private DefaultComboBoxModel<LocalDate> fromBoxModel;
+    private DefaultComboBoxModel<LocalDate> toBoxModel;
+    private DefaultListModel<String> categoryListModel;
 
     public DetailFrame(String title, ExpenseManager expenseManager) {
         super(title);
@@ -37,8 +45,8 @@ public class DetailFrame extends JFrame{
         this.expenseManager = expenseManager;
 
         if (!expenseManager.IsEmpty()) {
-            InitializationData();
             InitializationUI();
+            InitializationData();
         }
 
         this.addComponentListener(new ComponentAdapter() {
@@ -46,23 +54,80 @@ public class DetailFrame extends JFrame{
                 /* code run when component hidden*/
             }
             public void componentShown(ComponentEvent e) {
-                if (!expenseManager.IsEmpty()) {
-                    expenseManager.CalculatePieDataset();
-                    expenseManager.CalculateCategoryDataset();
+                InitializationData();
+            }
+        });
+
+        categoryList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                InitializationData();
+            }
+        });
+
+        fromBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                if (fromBox.getSelectedIndex() > toBox.getSelectedIndex()) {
+                    toBox.setSelectedIndex(fromBox.getSelectedIndex());
+                } else {
+                    InitializationData();
+                }
+            }
+        });
+
+        toBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                if (toBox.getSelectedIndex() < fromBox.getSelectedIndex()) {
+                    fromBox.setSelectedIndex(toBox.getSelectedIndex());
+                } else {
+                    InitializationData();
                 }
             }
         });
     }
 
     private void InitializationData() {
-        expenseManager.CalculatePieDataset();
-        expenseManager.CalculateCategoryDataset();
+        if (!expenseManager.IsEmpty() && fromBox.getSelectedItem() != null && toBox.getSelectedItem() != null) {
+            expenseManager.CalculatePieDataset((LocalDate)fromBox.getSelectedItem(),
+                    (LocalDate)toBox.getSelectedItem(),
+                    categoryList.getSelectedValuesList());
+            expenseManager.CalculateCategoryDataset((LocalDate)fromBox.getSelectedItem(),
+                    (LocalDate)toBox.getSelectedItem(),
+                    categoryList.getSelectedValuesList());
+        }
     }
 
     private void InitializationUI() {
+        InitDateBoxes();
+        InitCategoryList();
         CreatePieChart();
         CreateStackedBarChart();
         CreateLineChart();
+    }
+
+    private void InitCategoryList() {
+        categoryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        categoryListModel = new DefaultListModel<>();
+        for (String c : expenseManager.GetCategories().keySet()) {
+            categoryListModel.addElement(c);
+        }
+        categoryList.setModel(categoryListModel);
+        int[] indices = new int[categoryListModel.getSize()];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = i;
+        }
+        categoryList.setSelectedIndices(indices);
+    }
+
+    private void InitDateBoxes() {
+        fromBoxModel = new DefaultComboBoxModel<>();
+        toBoxModel = new DefaultComboBoxModel<>();
+        fromBox.setModel(fromBoxModel);
+        toBox.setModel(toBoxModel);
+
+        fromBoxModel.addAll(expenseManager.GetMonths());
+        toBoxModel.addAll(expenseManager.GetMonths());
+        fromBox.setSelectedIndex(0);
+        toBox.setSelectedIndex(toBoxModel.getSize()-1);
     }
 
     private void CreateStackedBarChart() {

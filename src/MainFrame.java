@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class MainFrame extends JFrame{
@@ -119,7 +120,7 @@ public class MainFrame extends JFrame{
 
         saveNewFileMenu.addActionListener(e -> {
             expenseManager.SaveNewFile();
-            this.setTitle("Ausgabenmanager - " + expenseManager.getSavedFilePath());
+            this.setTitle("Ausgabenmanager - " + expenseManager.GetSavedFilePath());
         });
 
         closeFileMenu.addActionListener(e -> {
@@ -157,7 +158,6 @@ public class MainFrame extends JFrame{
         frame.setVisible(true);
 
         System.out.println("Program start");
-
     }
 
     private JMenuBar AddMenuBar() {
@@ -180,6 +180,8 @@ public class MainFrame extends JFrame{
     private void InitializationUI() {
 
         expenseJListModel = new DefaultListModel<>();
+        expenseJList.setModel(expenseJListModel);
+        //expenseJList.setCellRenderer(new ExpenseRenderer());
         banksettingsJCBoxModel = new DefaultComboBoxModel<>();
         categoriesJCBoxModel = new DefaultComboBoxModel<>();
 
@@ -191,7 +193,7 @@ public class MainFrame extends JFrame{
         banksettingsBox.setModel(banksettingsJCBoxModel);
         banksettingsJCBoxModel.addAll(expenseManager.GetBanksettingSet());
         banksettingsBox.setSelectedIndex(0);
-        expenseJList.setModel(expenseJListModel);
+
 
                                                                 //Zeige Kategorienauswertung
         ShowCategoryAmounts();
@@ -209,8 +211,8 @@ public class MainFrame extends JFrame{
 
     private void UISettingsAfterOpen() {
         if (expenseManager.GetExpenseListSize() > 0) {
-            this.setTitle("Ausgabenmanager - " + expenseManager.getSavedFilePath());
-            if (expenseManager.getSavedFilePath().endsWith("emf")) {
+            this.setTitle("Ausgabenmanager - " + expenseManager.GetSavedFilePath());
+            if (expenseManager.GetSavedFilePath().endsWith("emf")) {
                 saveFileMenu.setEnabled(true);
             }
             saveNewFileMenu.setEnabled(true);
@@ -264,8 +266,8 @@ public class MainFrame extends JFrame{
     private void ShowCategoryAmounts() {
         sumLabel.setText(String.format("%,.02f €", expenseManager.GetSumExpenses()));
         catLabel.setText(String.format("%,.02f €", expenseManager.GetSumCatExpenses()));
-        catInfoLabel.setText(TreeMapToString(expenseManager.getCategories(), false));
-        catAmountLabel.setText(TreeMapToString(expenseManager.getCategories(), true));
+        catInfoLabel.setText(TreeMapToString(expenseManager.GetCategories(), false));
+        catAmountLabel.setText(TreeMapToString(expenseManager.GetCategories(), true));
     }
                                                                 //Expense-related functions
 

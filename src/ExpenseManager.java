@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -52,7 +53,7 @@ public class ExpenseManager {
         return expenses.isEmpty();
     }
 
-    public TreeMap<String, Double> getCategories() {
+    public TreeMap<String, Double> GetCategories() {
         return categories;
     }
 
@@ -64,7 +65,7 @@ public class ExpenseManager {
         return fileReader.getBanks();
     }
 
-    public String getSavedFilePath() {
+    public String GetSavedFilePath() {
         return savedFilePath;
     }
 
@@ -76,14 +77,31 @@ public class ExpenseManager {
         return sumCatExpenses;
     }
 
+    public LocalDate GetBeginDate() { return beginDate; }
+
+    public LocalDate GetEndDate() { return endDate; }
+
+    public int GetMonthDifference() {
+        return (int) ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1)) + 1;
+    }
+
+    public TreeSet<LocalDate> GetMonths() {
+        TreeSet<LocalDate> months = new TreeSet<>();
+        int monthDifference = GetMonthDifference();
+        for (int i = 0; i < monthDifference; i++) {
+            months.add(beginDate.withDayOfMonth(1).plusMonths(i));
+        }
+        return months;
+    }
+
     public void ClearExpenses() {
         expenses.clear();
     }
 
-    public void CalculateCategoryDataset() {
+    public void CalculateCategoryDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
         categoryDataset.clear();
         int startMonth = beginDate.getMonthValue();
-        int monthDifference = (int) ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1));
+        int monthDifference = Math.min(GetMonthDifference(), (int)ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1)) + 1);
         double[][] valuesMonths = new double[categories.size()][monthDifference];
         String[] months = new String[monthDifference];
         String[] categoryStrings = new String[categories.size()];
@@ -92,7 +110,7 @@ public class ExpenseManager {
             months[i] = beginDate.plusMonths(i).format(DateTimeFormatter.ofPattern("MM.yyyy"));
             int finalI = i;
             int finalC = 0;
-            for (String c : categories.keySet()) {
+            for (String c : categories) {
                 int finalC1 = finalC;
                 if (i == 0) {
                     categoryStrings[finalC1] = c;
@@ -110,14 +128,23 @@ public class ExpenseManager {
         }
     }
 
-    public void CalculatePieDataset() {
+    public void CalculatePieDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
         pieDataset.clear();
         TreeMap<String, Double> dataMap = new TreeMap<String, Double>();
-        categories.keySet().forEach(k -> dataMap.put(k, 0.0));
+        categories.forEach(k -> dataMap.put(k, 0.0));
         expenses.stream()
                 .filter(e -> !e.getCategory().equals(""))
-                .forEach(e -> dataMap.replace(e.getCategory(), dataMap.get(e.getCategory())+e.getAmount()));
-        dataMap.forEach(pieDataset::setValue);
+                .filter(e -> e.getDate().isAfter(beginDate.minusDays(1)) && endDate.plusMonths(1).isAfter(e.getDate()))
+                .forEach(e -> {
+                    if (dataMap.containsKey(e.getCategory())) {
+                        dataMap.replace(e.getCategory(), dataMap.get(e.getCategory())+e.getAmount());
+                    }
+                });
+        dataMap.forEach((k,v) -> {
+            if (v > 0.0) {
+                pieDataset.setValue(k, v);
+            }
+        });
     }
 
     public DefaultCategoryDataset GetCategoryDataset() {
