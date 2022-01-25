@@ -225,6 +225,7 @@ public class MainFrame extends JFrame{
             onlyOneCBox.setEnabled(true);
             filterField.setText("");
             detailFrame = null;
+            detailFrameButton.setEnabled(true);
 
             expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
             ShowCategoryAmounts();
@@ -244,6 +245,7 @@ public class MainFrame extends JFrame{
         onlyOneCBox.setEnabled(true);
         filterField.setText("");
         detailFrame = null;
+        detailFrameButton.setEnabled(false);
 
         expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
         ShowCategoryAmounts();
