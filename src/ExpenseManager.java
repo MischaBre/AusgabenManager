@@ -25,6 +25,7 @@ public class ExpenseManager {
     private final DefaultCategoryDataset categoryDataset;
 
     public ExpenseManager() {
+        System.out.println("EM " + Thread.currentThread().getName());
         //ExpenseList and JList initialization
         expenses = new ArrayList<>();
 
@@ -99,13 +100,13 @@ public class ExpenseManager {
     }
 
     public void CalculateCategoryDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
+        System.out.println("CCD " + Thread.currentThread().getName());
         categoryDataset.clear();
         int startMonth = beginDate.getMonthValue();
-        int monthDifference = Math.min(GetMonthDifference(), (int)ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1)) + 1);
+        int monthDifference = Math.min(GetMonthDifference(), (int) ChronoUnit.MONTHS.between(beginDate.withDayOfMonth(1), endDate.withDayOfMonth(1)) + 1);
         double[][] valuesMonths = new double[categories.size()][monthDifference];
         String[] months = new String[monthDifference];
         String[] categoryStrings = new String[categories.size()];
-
         for (int i = 0; i < monthDifference; i++) {
             months[i] = beginDate.plusMonths(i).format(DateTimeFormatter.ofPattern("MM.yyyy"));
             int finalI = i;
@@ -155,6 +156,7 @@ public class ExpenseManager {
     }
 
     public void CalculateCategoryAmounts(boolean onlyPositive) {
+        System.out.println("CCA " + Thread.currentThread().getName());
         categories.replaceAll((k,v) -> v = 0.0);
 
         sumExpenses = 0.0;
@@ -171,6 +173,7 @@ public class ExpenseManager {
     }
 
     public Stream<Expense> GetFilteredExpenses(boolean onlyPositive, boolean onlyUncategorized, String filterField) {
+        System.out.println("GFE " + Thread.currentThread().getName());
         return expenses.stream()
                 .sorted(Expense::compareTo)
                 .filter(e -> e.getAmount() > 0.0 || !onlyPositive)

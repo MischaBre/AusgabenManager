@@ -53,9 +53,60 @@ public class MainFrame extends JFrame{
                                                                 //StartUp and Initialization of program
         expenseManager = new ExpenseManager();
         InitializationUI();
-
+        AddListeners();
                                                                 //ActionListeners
 
+    }
+
+    public static void main(String[] args) {
+
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+                    System.setProperty("apple.laf.useScreenMenuBar", "true");
+                }
+
+                JFrame frame = new MainFrame("Ausgabenmanager");
+                frame.setMinimumSize(new Dimension(1200,700));
+                frame.setVisible(true);
+            }
+        });
+
+        System.out.println("Program start");
+    }
+
+    private void InitializationUI() {
+
+        expenseJListModel = new DefaultListModel<>();
+        expenseJList.setModel(expenseJListModel);
+        //expenseJList.setCellRenderer(new ExpenseRenderer());
+        banksettingsJCBoxModel = new DefaultComboBoxModel<>();
+        categoriesJCBoxModel = new DefaultComboBoxModel<>();
+
+        categoryBox.setModel(categoriesJCBoxModel);
+        categoriesJCBoxModel.addElement("");
+        categoriesJCBoxModel.addAll(expenseManager.GetCategoryStringSet());
+        categoryBox.setEnabled(false);
+
+        banksettingsBox.setModel(banksettingsJCBoxModel);
+        banksettingsJCBoxModel.addAll(expenseManager.GetBanksettingSet());
+        banksettingsBox.setSelectedIndex(0);
+
+                                                                //Zeige Kategorienauswertung
+        ShowCategoryAmounts();
+
+                                                                //Label initialisieren
+        dateLabel.setText(" ");
+        consignorLabel.setText(" ");
+
+                                                                //sonstiges
+        this.setJMenuBar(AddMenuBar());
+        saveFileMenu.setEnabled(false);
+        saveNewFileMenu.setEnabled(false);
+        closeFileMenu.setEnabled(false);
+    }
+
+    private void AddListeners() {
         expenseJList.addListSelectionListener(e -> {
             //getValueIsAdjusting verhindert doppeltes Aufrufen des Listeners.
             // selectedExpense wird aktualisiert und Details angezeigt.
@@ -147,19 +198,6 @@ public class MainFrame extends JFrame{
         });
     }
 
-    public static void main(String[] args) {
-
-        if (System.getProperty("os.name").toLowerCase().contains("mac")) {
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-        }
-
-        JFrame frame = new MainFrame("Ausgabenmanager");
-        frame.setMinimumSize(new Dimension(1200,700));
-        frame.setVisible(true);
-
-        System.out.println("Program start");
-    }
-
     private JMenuBar AddMenuBar() {
         menuBar.add(menu);
 
@@ -177,39 +215,8 @@ public class MainFrame extends JFrame{
         return menuBar;
     }
 
-    private void InitializationUI() {
-
-        expenseJListModel = new DefaultListModel<>();
-        expenseJList.setModel(expenseJListModel);
-        //expenseJList.setCellRenderer(new ExpenseRenderer());
-        banksettingsJCBoxModel = new DefaultComboBoxModel<>();
-        categoriesJCBoxModel = new DefaultComboBoxModel<>();
-
-        categoryBox.setModel(categoriesJCBoxModel);
-        categoriesJCBoxModel.addElement("");
-        categoriesJCBoxModel.addAll(expenseManager.GetCategoryStringSet());
-        categoryBox.setEnabled(false);
-
-        banksettingsBox.setModel(banksettingsJCBoxModel);
-        banksettingsJCBoxModel.addAll(expenseManager.GetBanksettingSet());
-        banksettingsBox.setSelectedIndex(0);
-
-
-                                                                //Zeige Kategorienauswertung
-        ShowCategoryAmounts();
-
-                                                                //Label initialisieren
-        dateLabel.setText(" ");
-        consignorLabel.setText(" ");
-
-                                                                //sonstiges
-        this.setJMenuBar(AddMenuBar());
-        saveFileMenu.setEnabled(false);
-        saveNewFileMenu.setEnabled(false);
-        closeFileMenu.setEnabled(false);
-    }
-
     private void UISettingsAfterOpen() {
+        System.out.println("UIAO" + Thread.currentThread().getName());
         if (expenseManager.GetExpenseListSize() > 0) {
             this.setTitle("Ausgabenmanager - " + expenseManager.GetSavedFilePath());
             if (expenseManager.GetSavedFilePath().endsWith("emf")) {
