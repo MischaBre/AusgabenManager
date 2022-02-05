@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
-import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -192,7 +191,7 @@ public class ExpenseManager {
             if (isImport) {
                 expenseList = fileReader.ImportExpensesFromCSV(chooser.getSelectedFile().getAbsolutePath(), selectedBanksetting);
             } else {
-                expenseList = fileReader.LoadExpensesFromFile(chooser.getSelectedFile().getAbsolutePath());
+                expenseList = fileReader.LoadExpensesFromFileIO(chooser.getSelectedFile().getAbsolutePath());
             }
 
             if (expenseList.size() > 0) {
@@ -212,7 +211,7 @@ public class ExpenseManager {
 
     public void SaveFile() {
         try {
-            fileReader.SaveExpensesToEMF(savedFilePath, expenses);
+            fileReader.SaveExpensesToEMFIO(savedFilePath, expenses);
         } catch (FileNotFoundException ex) {
             System.out.println("Error");
             ex.printStackTrace();
@@ -225,7 +224,7 @@ public class ExpenseManager {
 
         if (choice == JFileChooser.APPROVE_OPTION) {
             try {
-                fileReader.SaveExpensesToEMF(chooser.getSelectedFile().getAbsolutePath(), expenses);
+                fileReader.SaveExpensesToEMFIO(chooser.getSelectedFile().getAbsolutePath(), expenses);
                 savedFilePath = chooser.getSelectedFile().getAbsolutePath();
 
             } catch (FileNotFoundException ex) {

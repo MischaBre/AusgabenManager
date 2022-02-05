@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 public class Banksetting implements Comparable<Banksetting>{
 
     private final String name;
@@ -55,11 +53,33 @@ public class Banksetting implements Comparable<Banksetting>{
         return dateFormat;
     }
 
-    public String getCharSet() {
-        return charSet;
-    }
+    public String getCharSet() { return charSet; }
 
     public int[] getInputLines() {
         return inputLines;
+    }
+
+    public String getSettingsString() {
+        return name +
+                "=" +
+                skipLines +
+                "," +
+                delimiter +
+                "," +
+                replaceQuotes +
+                "," +
+                inputLines[0] +
+                "," +
+                dateFormat +
+                "," +
+                inputLines[1] +
+                "," +
+                inputLines[2] +
+                "," +
+                inputLines[3] +
+                "," +
+                inputLines[4] +
+                "," +
+                charSet;
     }
 }
