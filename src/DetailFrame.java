@@ -43,11 +43,7 @@ public class DetailFrame extends JFrame{
         this.setMinimumSize(new Dimension(1100,680));
 
         this.expenseManager = expenseManager;
-
-        if (!expenseManager.IsEmpty()) {
-            InitializationUI();
-            InitializationData();
-        }
+        InitializationUI();
 
         this.addComponentListener(new ComponentAdapter() {
             public void componentHidden(ComponentEvent e) {
@@ -97,11 +93,13 @@ public class DetailFrame extends JFrame{
     }
 
     private void InitializationUI() {
-        InitDateBoxes();
-        InitCategoryList();
-        CreatePieChart();
-        CreateStackedBarChart();
-        CreateLineChart();
+        if (!expenseManager.IsEmpty()) {
+            InitDateBoxes();
+            InitCategoryList();
+            CreatePieChart();
+            CreateStackedBarChart();
+            CreateLineChart();
+        }
     }
 
     private void InitCategoryList() {
