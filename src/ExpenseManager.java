@@ -11,7 +11,8 @@ import org.jfree.data.general.DefaultPieDataset;
 public class ExpenseManager {
 
     private List<Expense> expenses;
-    private final TreeMap<String, Double> categories;
+    private TreeMap<String, Double> categories;
+    private final String cfgFile;
 
     private LocalDate beginDate;
     private LocalDate endDate;
@@ -23,16 +24,17 @@ public class ExpenseManager {
     private final DefaultPieDataset pieDataset;
     private final DefaultCategoryDataset categoryDataset;
 
-    public ExpenseManager() {
+    public ExpenseManager(String filename) {
         System.out.println("EM " + Thread.currentThread().getName());
         //ExpenseList and JList initialization
         expenses = new ArrayList<>();
+        categories = new TreeMap<>();
 
         //FileReader initialization
         fileReader = new FileReader();
-        fileReader.LoadFromCfg("settings.ini");
+        cfgFile = filename;
+        categories = fileReader.LoadFromCfg(cfgFile);
         savedFilePath = "";
-        categories = fileReader.getCategories();
 
         sumExpenses = 0.0;
         sumCatExpenses = 0.0;
@@ -96,6 +98,18 @@ public class ExpenseManager {
 
     public void ClearExpenses() {
         expenses.clear();
+    }
+
+    public boolean isNewCategory(String input) {
+        return !categories.containsKey(input);
+    }
+
+    public void AddCategory(String input) {
+        categories.put(input, 0.0);
+    }
+
+    public void DeleteCategory(String input) {
+        categories.remove(input);
     }
 
     public void CalculateCategoryDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
@@ -231,6 +245,17 @@ public class ExpenseManager {
                 System.out.println("Error");
                 ex.printStackTrace();
             }
+        }
+    }
+
+    public void SaveCfgFile() {
+        JFileChooser chooser = new JFileChooser();
+        int choice = chooser.showSaveDialog(null);
+
+        if (choice == JFileChooser.APPROVE_OPTION) {
+            fileReader.SaveCfg(chooser.getSelectedFile().getAbsolutePath(), categories);
+            savedFilePath = chooser.getSelectedFile().getAbsolutePath();
+
         }
     }
 }

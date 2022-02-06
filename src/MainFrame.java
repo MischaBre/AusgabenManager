@@ -1,8 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class MainFrame extends JFrame{
@@ -23,6 +24,9 @@ public class MainFrame extends JFrame{
     private JCheckBox onlyPositiveCheckBox;
     private JCheckBox onlyOneCBox;
     private JButton detailFrameButton;
+    private JTextField catTextField;
+    private JButton addCatButton;
+    private JButton remCatButton;
 
     private DetailFrame detailFrame;
 
@@ -33,10 +37,12 @@ public class MainFrame extends JFrame{
     private final JMenuItem saveNewFileMenu = new JMenuItem("Datei speichern unter...");
     private final JMenuItem closeFileMenu = new JMenuItem("Datei schließen");
     private final JMenuItem importFileMenu = new JMenuItem("CSV importieren");
+    private final JMenuItem settingsFileMenu = new JMenuItem("Settings speichern");
     private final JMenuItem exitMenu = new JMenuItem("Programm schließen");
 
     private final ExpenseManager expenseManager;
     private Expense selectedExpense;
+    private boolean categoryUpdates;
 
     private DefaultComboBoxModel<Banksetting> banksettingsJCBoxModel;
     private DefaultListModel<Expense> expenseJListModel;
@@ -51,11 +57,9 @@ public class MainFrame extends JFrame{
         this.pack();
 
                                                                 //StartUp and Initialization of program
-        expenseManager = new ExpenseManager();
+        expenseManager = new ExpenseManager("settings.ini");
         InitializationUI();
         AddListeners();
-                                                                //ActionListeners
-
     }
 
     public static void main(String[] args) {
@@ -84,9 +88,9 @@ public class MainFrame extends JFrame{
         categoriesJCBoxModel = new DefaultComboBoxModel<>();
 
         categoryBox.setModel(categoriesJCBoxModel);
-        categoriesJCBoxModel.addElement("");
-        categoriesJCBoxModel.addAll(expenseManager.GetCategoryStringSet());
+        RefreshCatListBoxModel();
         categoryBox.setEnabled(false);
+        categoryUpdates = true;
 
         banksettingsBox.setModel(banksettingsJCBoxModel);
         banksettingsJCBoxModel.addAll(expenseManager.GetBanksettingSet());
@@ -117,7 +121,7 @@ public class MainFrame extends JFrame{
         });
 
         categoryBox.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && selectedExpense != null) {
+            if (categoryUpdates && e.getStateChange() == ItemEvent.SELECTED && selectedExpense != null) {
                 Expense currentExpense = selectedExpense;
                 String selectedCategory = GetSelectedCategory();
                 if (!selectedExpense.getCategory().equals(selectedCategory)) {
@@ -185,6 +189,10 @@ public class MainFrame extends JFrame{
             UISettingsAfterOpen();
         });
 
+        settingsFileMenu.addActionListener(e -> {
+            expenseManager.SaveCfgFile();
+        });
+
         exitMenu.addActionListener(e -> {
             System.exit(0);
         });
@@ -195,6 +203,39 @@ public class MainFrame extends JFrame{
                 detailFrame.setMinimumSize(new Dimension(900,550));
             }
             detailFrame.setVisible(true);
+        });
+
+        addCatButton.addActionListener(e -> {
+            if (catTextField.getText().length() > 0) {
+                String input = catTextField.getText();
+                if (expenseManager.isNewCategory(input)) {
+                    categoryUpdates = false;
+                    catTextField.setText("");
+                    expenseManager.AddCategory(input);
+                    RefreshCatListBoxModel();
+                    categoryUpdates = true;
+                    categoryBox.setSelectedItem(input);
+                    ShowCategoryAmounts();
+                }
+            }
+        });
+
+        remCatButton.addActionListener(e -> {
+            if (!GetSelectedCategory().equals("")) {
+                String selectedCategory = GetSelectedCategory();
+                int yesToDelete = JOptionPane.showConfirmDialog(null, "Soll die Kategorie " + selectedCategory + " wirklich gelöscht werden? Alle Ausgaben mit dieser Kategorie werden zurückgesetzt.");
+                if (yesToDelete == JOptionPane.YES_OPTION) {
+                    categoryUpdates = false;
+                    expenseManager.GetExpenseList().stream()
+                            .filter(exp -> exp.getCategory().equals(selectedCategory))
+                            .forEach(exp -> exp.setCategory(""));
+                    expenseManager.DeleteCategory(selectedCategory);
+                    RefreshCatListBoxModel();
+                    categoryUpdates = true;
+                    categoryBox.setSelectedIndex(0);
+                    ShowCategoryAmounts();
+                }
+            }
         });
     }
 
@@ -208,6 +249,7 @@ public class MainFrame extends JFrame{
         menu.addSeparator();
 
         menu.add(importFileMenu);
+        menu.add(settingsFileMenu);
         menu.addSeparator();
 
         menu.add(exitMenu);
@@ -323,6 +365,14 @@ public class MainFrame extends JFrame{
         data.forEach((k,v) -> string.append("<p align=\"").append(alignment).append("\">").append(isValue ? String.format("%,.2f €", v) : k).append("</p>"));
         string.append("</html>");
         return string.toString();
+    }
+
+    private void RefreshCatListBoxModel() {
+        if (categoriesJCBoxModel.getSize() > 0) {
+            categoriesJCBoxModel.removeAllElements();
+        }
+        categoriesJCBoxModel.addElement("");
+        categoriesJCBoxModel.addAll(expenseManager.GetCategoryStringSet());
     }
 }
 

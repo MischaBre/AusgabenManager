@@ -13,13 +13,11 @@ import java.util.*;
 
 public class FileReader {
 
-    private final TreeMap<String, Double> categories;
     private final TreeSet<Banksetting> banksettings;
     private final static String KEY = "lisaIstSuess0529";
 
     public FileReader() {
 
-        categories = new TreeMap<>();
         banksettings = new TreeSet<>();
 
     }
@@ -33,15 +31,19 @@ public class FileReader {
             } else {
                 string = new String(charArray, charset).split("\n");
             }
-            return string;
+            String[] trimmedString = new String[string.length];
+            for (int i = 0; i < string.length; i++) {
+                trimmedString[i] = string[i].trim();
+            }
+            return trimmedString;
         } catch (IOException e) {
             e.printStackTrace();
         }
         return new String[1];
     }
 
-    public void LoadFromCfg(String filename) {
-
+    public TreeMap<String, Double> LoadFromCfg(String filename) {
+        TreeMap<String, Double> categories = new TreeMap<>();
         int type = 0;                                   //int type for switching between add to categories/types
         for (String line : LoadFileIO(filename, false, "UTF-8")) {
             switch (line) {
@@ -64,14 +66,15 @@ public class FileReader {
                     break;
             }
         }
+        return categories;
     }
 
-    public void SaveCfg(String filename) {
+    public void SaveCfg(String filename, TreeMap<String, Double> categories) {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append("[categories]\n");
             categories.keySet().forEach(v -> sb.append(v).append("\n"));
-            sb.append("\n");
+            sb.append("\n[banksettings]\n");
             banksettings.forEach(b -> sb.append(b.getSettingsString()).append("\n"));
 
             FileOutputStream fos = new FileOutputStream(filename);
@@ -163,10 +166,6 @@ public class FileReader {
             e.printStackTrace();
         }
         return "";
-    }
-
-    public TreeMap<String, Double> getCategories() {
-        return categories;
     }
 
     public TreeSet<Banksetting> getBanks() {
