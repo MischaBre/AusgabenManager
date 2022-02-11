@@ -82,14 +82,16 @@ public class DetailFrame extends JFrame{
     }
 
     private void InitializationData() {
-        if (!expenseManager.IsEmpty() && fromBox.getSelectedItem() != null && toBox.getSelectedItem() != null) {
-            expenseManager.CalculatePieDataset((LocalDate)fromBox.getSelectedItem(),
-                    (LocalDate)toBox.getSelectedItem(),
-                    categoryList.getSelectedValuesList());
-            expenseManager.CalculateCategoryDataset((LocalDate)fromBox.getSelectedItem(),
-                    (LocalDate)toBox.getSelectedItem(),
-                    categoryList.getSelectedValuesList());
-        }
+        new Thread(() -> {
+            if (!expenseManager.IsEmpty() && fromBox.getSelectedItem() != null && toBox.getSelectedItem() != null) {
+                expenseManager.CalculatePieDataset((LocalDate)fromBox.getSelectedItem(),
+                        (LocalDate)toBox.getSelectedItem(),
+                        categoryList.getSelectedValuesList());
+                expenseManager.CalculateCategoryDataset((LocalDate)fromBox.getSelectedItem(),
+                        (LocalDate)toBox.getSelectedItem(),
+                        categoryList.getSelectedValuesList());
+            }
+        }).start();
     }
 
     private void InitializationUI() {

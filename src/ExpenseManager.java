@@ -98,6 +98,14 @@ public class ExpenseManager {
 
     public void ClearExpenses() {
         expenses.clear();
+        beginDate = LocalDate.of(1900,1,1);
+        endDate = LocalDate.of(1900,1,2);
+        sumExpenses = 0.0;
+        sumCatExpenses = 0.0;
+        categories.replaceAll((k,v) -> v = 0.0);
+        pieDataset.clear();
+        categoryDataset.clear();
+        savedFilePath = "";
     }
 
     public boolean isNewCategory(String input) {
@@ -194,11 +202,8 @@ public class ExpenseManager {
                 .filter(e -> e.getConsignor().toLowerCase().contains(filterField.toLowerCase()) || e.getCategory().toLowerCase().contains((filterField.toLowerCase())));
     }
 
-    public void OpenFile(boolean isImport, Banksetting selectedBanksetting) {
-        List<Expense> expenseList = new ArrayList<>();
-        if (expenses != null) {
-            expenseList = expenses;
-        }
+    public boolean OpenFile(boolean isImport, Banksetting selectedBanksetting) {
+        List<Expense> expenseList;
         JFileChooser chooser = new JFileChooser();
         int choice = chooser.showOpenDialog(null);
         if (choice == JFileChooser.APPROVE_OPTION) {
@@ -207,20 +212,19 @@ public class ExpenseManager {
             } else {
                 expenseList = fileReader.LoadExpensesFromFileIO(chooser.getSelectedFile().getAbsolutePath());
             }
-
             if (expenseList.size() > 0) {
                 savedFilePath = chooser.getSelectedFile().getAbsolutePath();
+                expenses = expenseList;
+                beginDate = expenses.stream()
+                        .min(Expense::compareTo)
+                        .get().getDate();
+                endDate = expenses.stream()
+                        .max(Expense::compareTo)
+                        .get().getDate();
+                return true;
             }
         }
-        expenses = expenseList;
-        if (!expenses.isEmpty()) {
-            beginDate = expenses.stream()
-                    .min(Expense::compareTo)
-                    .get().getDate();
-            endDate = expenses.stream()
-                    .max(Expense::compareTo)
-                    .get().getDate();
-        }
+        return false;
     }
 
     public void SaveFile() {

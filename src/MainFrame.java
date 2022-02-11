@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -165,8 +163,9 @@ public class MainFrame extends JFrame{
         });
 
         openFileMenu.addActionListener(e -> {
-            expenseManager.OpenFile(false, GetSelectedBanksetting());
-            UISettingsAfterOpen();
+            if (expenseManager.OpenFile(false, GetSelectedBanksetting())) {
+                UISettingsAfterOpen();
+            }
         });
 
         saveFileMenu.addActionListener(e -> {
@@ -185,8 +184,9 @@ public class MainFrame extends JFrame{
         });
 
         importFileMenu.addActionListener(e -> {
-            expenseManager.OpenFile(true, GetSelectedBanksetting());
-            UISettingsAfterOpen();
+            if (expenseManager.OpenFile(true, GetSelectedBanksetting())) {
+                UISettingsAfterOpen();
+            }
         });
 
         settingsFileMenu.addActionListener(e -> {
@@ -259,7 +259,7 @@ public class MainFrame extends JFrame{
 
     private void UISettingsAfterOpen() {
         System.out.println("UIAO" + Thread.currentThread().getName());
-        if (expenseManager.GetExpenseListSize() > 0) {
+        if (!expenseManager.IsEmpty()) {
             this.setTitle("Ausgabenmanager - " + expenseManager.GetSavedFilePath());
             if (expenseManager.GetSavedFilePath().endsWith("emf")) {
                 saveFileMenu.setEnabled(true);
@@ -276,8 +276,10 @@ public class MainFrame extends JFrame{
             detailFrame = null;
             detailFrameButton.setEnabled(true);
 
-            expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
-            ShowCategoryAmounts();
+            new Thread(() -> {
+                expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
+                ShowCategoryAmounts();
+            }).start();
         }
     }
 
@@ -296,7 +298,6 @@ public class MainFrame extends JFrame{
         detailFrame = null;
         detailFrameButton.setEnabled(false);
 
-        expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
         ShowCategoryAmounts();
     }
 
@@ -346,12 +347,15 @@ public class MainFrame extends JFrame{
     }
 
     private void ReloadJList() {
-        expenseJListModel.clear();
-        expenseManager.GetFilteredExpenses(
-                onlyPositiveCheckBox.isSelected(),
-                uncategorizedCheckBox.isSelected(),
-                filterField.getText())
-                .forEach(e -> expenseJListModel.addElement(e));
+        Thread blub = new Thread(() -> {
+            expenseJListModel.clear();
+            expenseManager.GetFilteredExpenses(
+                            onlyPositiveCheckBox.isSelected(),
+                            uncategorizedCheckBox.isSelected(),
+                            filterField.getText())
+                    .forEach(e -> expenseJListModel.addElement(e));
+        });
+        blub.start();
     }
 
     private Banksetting GetSelectedBanksetting() {
