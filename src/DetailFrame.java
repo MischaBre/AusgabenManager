@@ -7,6 +7,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import javax.swing.*;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -21,6 +22,8 @@ public class DetailFrame extends JFrame{
     private JComboBox<LocalDate> fromBox;
     private JComboBox<LocalDate> toBox;
     private JList<String> categoryList;
+    private JLabel top5Label;
+    private JCheckBox onlyPositive;
 
     private JFreeChart pieChart;
     private JFreeChart stackedBarChart;
@@ -79,19 +82,29 @@ public class DetailFrame extends JFrame{
                 }
             }
         });
+
+        onlyPositive.addActionListener(e -> {
+            InitializationData();
+        });
     }
 
     private void InitializationData() {
-        new Thread(() -> {
             if (!expenseManager.IsEmpty() && fromBox.getSelectedItem() != null && toBox.getSelectedItem() != null) {
                 expenseManager.CalculatePieDataset((LocalDate)fromBox.getSelectedItem(),
                         (LocalDate)toBox.getSelectedItem(),
-                        categoryList.getSelectedValuesList());
+                        categoryList.getSelectedValuesList(),
+                        onlyPositive.isSelected());
                 expenseManager.CalculateCategoryDataset((LocalDate)fromBox.getSelectedItem(),
                         (LocalDate)toBox.getSelectedItem(),
-                        categoryList.getSelectedValuesList());
+                        categoryList.getSelectedValuesList(),
+                        onlyPositive.isSelected());
+                DrawTop(expenseManager.GetTopExpenses(20,
+                        (LocalDate)fromBox.getSelectedItem(),
+                        (LocalDate)toBox.getSelectedItem(),
+                        categoryList.getSelectedValuesList(),
+                        onlyPositive.isSelected()));
             }
-        }).start();
+
     }
 
     private void InitializationUI() {
@@ -128,6 +141,21 @@ public class DetailFrame extends JFrame{
         toBoxModel.addAll(expenseManager.GetMonths());
         fromBox.setSelectedIndex(0);
         toBox.setSelectedIndex(toBoxModel.getSize()-1);
+    }
+
+    private void DrawTop(String[] input) {
+        if (input != null && input.length > 0) {
+            StringBuilder string = new StringBuilder();
+            string.append("<html>");
+            for (String s : input) {
+                string.append(s);
+                string.append("<br>");
+            }
+            string.append("</html>");
+            top5Label.setText(string.toString());
+        } else {
+            top5Label.setText("");
+        }
     }
 
     private void CreateStackedBarChart() {

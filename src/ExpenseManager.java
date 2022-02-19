@@ -120,7 +120,21 @@ public class ExpenseManager {
         categories.remove(input);
     }
 
-    public void CalculateCategoryDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
+    public String[] GetTopExpenses(int limit, LocalDate beginDate, LocalDate endDate, List<String> categories, boolean onlyPositive) {
+        String[] topFive;
+        Comparator<Expense> compareByAmount = Comparator.comparing(Expense::getAmount).reversed();
+        topFive = expenses.stream()
+                .filter(e -> categories.contains(e.getCategory()))
+                .filter(e -> e.getDate().isAfter(beginDate.minusDays(1)) && endDate.plusMonths(1).isAfter(e.getDate()))
+                .filter(e -> e.getAmount() > 0.0 || !onlyPositive)
+                .sorted(compareByAmount)
+                .limit(limit)
+                .map(Expense::GetShortString)
+                .toArray(String[]::new);
+        return topFive;
+    }
+
+    public void CalculateCategoryDataset(LocalDate beginDate, LocalDate endDate, List<String> categories, boolean onlyPositive) {
         System.out.println("CCD " + Thread.currentThread().getName());
         categoryDataset.clear();
         int startMonth = beginDate.getMonthValue();
@@ -141,6 +155,7 @@ public class ExpenseManager {
                 expenses.stream()
                         .filter(e -> e.getDate().format(DateTimeFormatter.ofPattern("MM.yyyy")).equals(months[finalI]))
                         .filter(e -> e.getCategory().equals(c))
+                        .filter(e -> e.getAmount() > 0.0 || !onlyPositive)
                         .forEach(e -> {
                             valuesMonths[finalC1][finalI] += e.getAmount();
                         });
@@ -150,13 +165,14 @@ public class ExpenseManager {
         }
     }
 
-    public void CalculatePieDataset(LocalDate beginDate, LocalDate endDate, List<String> categories) {
+    public void CalculatePieDataset(LocalDate beginDate, LocalDate endDate, List<String> categories, boolean onlyPositive) {
         pieDataset.clear();
         TreeMap<String, Double> dataMap = new TreeMap<String, Double>();
         categories.forEach(k -> dataMap.put(k, 0.0));
         expenses.stream()
                 .filter(e -> !e.getCategory().equals(""))
                 .filter(e -> e.getDate().isAfter(beginDate.minusDays(1)) && endDate.plusMonths(1).isAfter(e.getDate()))
+                .filter(e -> e.getAmount() > 0.0 || !onlyPositive)
                 .forEach(e -> {
                     if (dataMap.containsKey(e.getCategory())) {
                         dataMap.replace(e.getCategory(), dataMap.get(e.getCategory())+e.getAmount());

@@ -275,11 +275,8 @@ public class MainFrame extends JFrame{
             filterField.setText("");
             detailFrame = null;
             detailFrameButton.setEnabled(true);
-
-            new Thread(() -> {
-                expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
-                ShowCategoryAmounts();
-            }).start();
+            expenseManager.CalculateCategoryAmounts(onlyPositiveCheckBox.isSelected());
+            ShowCategoryAmounts();
         }
     }
 
@@ -297,7 +294,6 @@ public class MainFrame extends JFrame{
         filterField.setText("");
         detailFrame = null;
         detailFrameButton.setEnabled(false);
-
         ShowCategoryAmounts();
     }
 
@@ -347,15 +343,12 @@ public class MainFrame extends JFrame{
     }
 
     private void ReloadJList() {
-        Thread blub = new Thread(() -> {
-            expenseJListModel.clear();
-            expenseManager.GetFilteredExpenses(
-                            onlyPositiveCheckBox.isSelected(),
-                            uncategorizedCheckBox.isSelected(),
-                            filterField.getText())
-                    .forEach(e -> expenseJListModel.addElement(e));
-        });
-        blub.start();
+        expenseJListModel.clear();
+        expenseManager.GetFilteredExpenses(
+                onlyPositiveCheckBox.isSelected(),
+                        uncategorizedCheckBox.isSelected(),
+                        filterField.getText())
+                .forEach(e -> expenseJListModel.addElement(e));
     }
 
     private Banksetting GetSelectedBanksetting() {

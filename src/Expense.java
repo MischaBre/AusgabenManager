@@ -59,6 +59,10 @@ public class Expense implements Comparable<Expense> {
         return date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + delimiter + consignor + delimiter + consignorNumber + delimiter + detail + delimiter + amount + delimiter + category;
     }
 
+    public String GetShortString() {
+        return String.format("%,.2f € %s",amount,consignor);
+    }
+
     public String GetExpenseString() { return date + consignor  + consignorNumber + detail + amount; }
 
     public String getHash() { return hash; }
